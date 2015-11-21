@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Pocetak</string>
+    <string name="app_nameList">Bluetooth</string>
+    <string name="action_settings">Settings</string>
+    <string name="textUput">Unesite jednu od sledecih komandi:LEVO, DESNO, NAPRED, NAZAD i pritisnite dugme START</string>
+    <string name="textDugme">START</string>
+    <string name="textIspis"></string>
+    <string name="btnConnect">Connect</string>
+    <string name="connect_btn">Connect</string>
+    <string name="txtDevices">Paired Devices</string>
+    <string name="disconnect_btn">DISCONNECT</string>
+</resources>

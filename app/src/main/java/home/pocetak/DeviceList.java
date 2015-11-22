@@ -206,12 +206,12 @@ public class DeviceList extends AppCompatActivity implements AdapterView.OnItemC
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (resultCode == REQUEST_ENABLE_BT) {
+        if (requestCode == REQUEST_ENABLE_BT) {
             if (resultCode == RESULT_CANCELED) {
                 Toast.makeText(this, "Bluetooth must be enabled!", Toast.LENGTH_SHORT).show();
                 finish();
             }
-        } else if (resultCode == REQUEST_ENABLE_PAIRING) {
+        } else if (requestCode == REQUEST_ENABLE_PAIRING) {
             if (resultCode == RESULT_CANCELED) {
                 Toast.makeText(this, "You need to pair devices to connect!", Toast.LENGTH_SHORT).show();
                 finish();

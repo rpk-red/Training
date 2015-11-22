@@ -1,5 +1,6 @@
 package home.pocetak;
 
+import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.os.Bundle;
@@ -21,21 +22,24 @@ import android.widget.Toast;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
-    private Integer result;
-    BluetoothSocket socket;
+
+    static BluetoothDevice device;
+    private static final String LOG_TAG = "MainActivity";
+    private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+    private static final int SUCCESS_CONNECTED = 0;
     private static final int MESSAGE_READ = 1;
     private Handler handler;
     static Intent btIntent;
     static EditText unesi;
     static TextView ispisi;
-    //static Integer COUNTER = 0;
-    static boolean CLICKED_DISC = false;
-    static Button connectBtn;
-    static Button disconnectBtn;
-    static Boolean CONNECTED = false;
-    private static final String LOG_TAG = "MainActivity";
+    private Button connectBtn;
+    private Button disconnectBtn;
+   // private ConnectThread connect;
+    private String poruka;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -50,32 +54,34 @@ public class MainActivity extends AppCompatActivity {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
-               // mangeConnection();
                 sortiranje();
                 Log.d(LOG_TAG, "OnClick");
 
 
             }
         });
-        mangeConnection();
-
-        handler = new Handler(){
-
-            //String getKomanda = getIntent().getStringExtra("str_komanda");
-            @Override
-            public void handleMessage(Message msg) {
-                super.handleMessage(msg);
-
-                    switch (msg.what) {
-                        case MESSAGE_READ:
-                            byte[] readBuffer = (byte[]) msg.obj;
-                            Toast.makeText(MainActivity.this, readBuffer.toString(), Toast.LENGTH_LONG).show();
-                            break;
-                    }
-
-            }
-        };
+//        handler = new Handler(){
+//
+//            //String getKomanda = getIntent().getStringExtra("str_komanda");
+//            @Override
+//            public void handleMessage(Message msg) {
+//                super.handleMessage(msg);
+//                    poruka = "LEVO";
+//                    switch (msg.what) {
+//                        case SUCCESS_CONNECTED:
+//                            ConnectedThread connectedThread = new ConnectedThread((BluetoothSocket) msg.obj);
+//                            connectedThread.write(poruka.getBytes());
+//                            Log.d(LOG_TAG,"PISEM KOD");
+//                            break;
+//                        case MESSAGE_READ:
+//                            byte[] readBuffer = (byte[]) msg.obj;
+//                            Toast.makeText(MainActivity.this, readBuffer.toString(), Toast.LENGTH_LONG).show();
+//                            Log.d(LOG_TAG,"CITAM KOD");
+//                            break;
+//                    }
+//
+//            }
+//        };
 
 
     }
@@ -147,23 +153,16 @@ public class MainActivity extends AppCompatActivity {
 
     public void btnClickHandler(View view) {
 
-        if(view.getId() == R.id.btnConnect && CONNECTED == false) {
-            disconnectBtn.setVisibility(View.VISIBLE);
-            connectBtn.setVisibility(View.GONE);
+        if (view.getId() == R.id.btnConnect) {
             btIntent = new Intent(this, DeviceList.class);
             startActivityForResult(btIntent, 0);
         }
-//        else if (view.getId() == R.id.btnDisconnect){
-//
-//            if(CONNECTED == true){
-//
-////                disconnectBtn.setVisibility(View.GONE);
-////                connectBtn.setVisibility(View.VISIBLE);
-//                CLICKED_DISC = true;
-//                CONNECTED = false;
-//            }
-//
-//        }
+        else if (view.getId() == R.id.btnDisconnect) {
+         //   connect.cancel();
+            connectBtn.setVisibility(View.VISIBLE);
+            disconnectBtn.setVisibility(View.GONE);
+        }
+
 
     }
     public void Init()
@@ -174,89 +173,91 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
-    public void mangeConnection(){
-
-        String k = "NAPRED";
-        if(result == 0) {
-            ConnectedThread connectedThread = new ConnectedThread(DeviceList.globalSocket);
-            connectedThread.write(k.getBytes());
-            Log.d(LOG_TAG, "POSLAO STRING");
-        }
-//        String str = null;
-//        if(disconnectBtn.isShown()){
-//            str = unesi.getText().toString();
-//        }
-//            if(str != null){
-//                btIntent.putExtra("str_komanda", str);
-//            }
-//            startActivity(btIntent);
-//
-//            sortiranje();
-//
-       }
+//    public void mangeConnection(){
+////        String str = null;
+////        if(disconnectBtn.isShown()){
+////            str = unesi.getText().toString();
+////        }
+////            if(str != null){
+////                btIntent.putExtra("str_komanda", str);
+////            }
+////            startActivity(btIntent);
+////
+////            sortiranje();
+////
+//       }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == 0){
-
+                int i;
+                i = data.getIntExtra("result",0);
             if (resultCode == RESULT_OK){
-                result = data.getIntExtra("result",-1);
+                BluetoothDevice selectedDevice = null;
+                selectedDevice = device;
+             ConnectThread  connect = new ConnectThread(selectedDevice);
+                connect.start();
+            }
+            if(resultCode == RESULT_CANCELED){
 
-                Toast.makeText(this,result,Toast.LENGTH_SHORT).show();
             }
         }
 
     }
-    private class ConnectedThread extends Thread {
+    private class ConnectThread extends Thread {
 
-        private final InputStream mmInStream;
-        private final OutputStream mmOutStream;
         private final BluetoothSocket mmSocket;
+        private final BluetoothDevice mmDevice;
 
+        public ConnectThread(BluetoothDevice device) {
 
-        public ConnectedThread(BluetoothSocket Socket){
-
-            InputStream tmpIn = null;
-            OutputStream tmpOut = null;
-            mmSocket = Socket;
+            BluetoothSocket tmp_socket = null;
+            mmDevice = device;
 
             try {
-                tmpIn = Socket.getInputStream();
-                tmpOut = Socket.getOutputStream();
+                tmp_socket = device.createRfcommSocketToServiceRecord(MY_UUID);
             } catch (IOException e) {
-                e.printStackTrace();
+                Log.v(LOG_TAG, "GRESKA OVDE");
             }
 
-            mmInStream = tmpIn;
-            mmOutStream = tmpOut;
+            mmSocket = tmp_socket;
+
         }
 
         public void run() {
 
-            byte[] buffer = new byte[1024];
-            int bytes;
+            try {
+                mmSocket.connect();
+                Log.d(LOG_TAG, "VALJA ZA SADA");
 
-            while (true) {
+            } catch (Exception e) {
 
                 try {
-                    bytes = mmInStream.read(buffer);
-                    handler.obtainMessage(MESSAGE_READ, bytes, -1, buffer).sendToTarget();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    break;
+                    mmSocket.close();
+
+                } catch (IOException closeException) {
+                    Log.v(LOG_TAG, "NEVALJA");
                 }
 
             }
+            if(mmSocket.isConnected()){
 
-        }
-
-        public void write(byte[] bytes) {
-            try {
-                mmOutStream.write(bytes);
-            } catch (IOException e) {
-                e.printStackTrace();
+                MainActivity.this.runOnUiThread(new Runnable() {
+                    public void run() {
+                        Toast.makeText(MainActivity.this, "CONNECTED", Toast.LENGTH_SHORT).show();
+                    }
+                });
+                //handler.obtainMessage(SUCCESS_CONNECTED, mmSocket).sendToTarget();
+                Log.d(LOG_TAG,"STIGAO SAM DOVDE USPESNO");
+            }
+            else {
+                MainActivity.this.runOnUiThread(new Runnable() {
+                    public void run() {
+                        Toast.makeText(MainActivity.this, "connection failed, pls try again!", Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
 
         }
@@ -265,9 +266,71 @@ public class MainActivity extends AppCompatActivity {
             try {
                 mmSocket.close();
             } catch (IOException e) {
-                e.printStackTrace();
-
             }
         }
     }
+
+//    private class ConnectedThread extends Thread {
+//
+//        private final InputStream mmInStream;
+//        private final OutputStream mmOutStream;
+//        private final BluetoothSocket mmSocket;
+//
+//
+//        public ConnectedThread(BluetoothSocket Socket){
+//
+//            InputStream tmpIn = null;
+//            OutputStream tmpOut = null;
+//            mmSocket = Socket;
+//
+//            try {
+//                tmpIn = Socket.getInputStream();
+//                tmpOut = Socket.getOutputStream();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//
+//            mmInStream = tmpIn;
+//            mmOutStream = tmpOut;
+//        }
+//
+//        public void run() {
+//
+//            byte[] buffer;
+//            int bytes;
+//
+//            while (true) {
+//
+//                try {
+//                    buffer = new byte[1024];
+//                    bytes = mmInStream.read(buffer);
+//                    handler.obtainMessage(MESSAGE_READ, bytes, -1, buffer).sendToTarget();
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                    break;
+//                }
+//
+//            }
+//
+//        }
+//
+//        public void write(byte[] bytes) {
+//            try {
+//                mmOutStream.write(bytes);
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//
+//        }
+//
+//        public void cancel() {
+//            try {
+//                mmSocket.close();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//
+//            }
+//        }
+//    }
+
 }

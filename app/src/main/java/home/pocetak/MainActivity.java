@@ -1,5 +1,6 @@
 package home.pocetak;
 
+import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.os.Bundle;
@@ -23,6 +24,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 public class MainActivity extends AppCompatActivity {
+    private static final int REQUEST_ENABLE_BT = 1;
     private Integer result;
     BluetoothSocket socket;
     private static final int MESSAGE_READ = 1;
@@ -36,6 +38,8 @@ public class MainActivity extends AppCompatActivity {
     static Button disconnectBtn;
     static Boolean CONNECTED = false;
     private static final String LOG_TAG = "MainActivity";
+    static BluetoothAdapter adapterBT;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,20 +49,16 @@ public class MainActivity extends AppCompatActivity {
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        checkBT();
         Init();
         Button button = (Button) findViewById(R.id.buttonStart);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
-               // mangeConnection();
                 sortiranje();
                 Log.d(LOG_TAG, "OnClick");
-
-
             }
         });
-        mangeConnection();
 
         handler = new Handler(){
 
@@ -148,10 +148,12 @@ public class MainActivity extends AppCompatActivity {
     public void btnClickHandler(View view) {
 
         if(view.getId() == R.id.btnConnect && CONNECTED == false) {
-            disconnectBtn.setVisibility(View.VISIBLE);
-            connectBtn.setVisibility(View.GONE);
+
+
+//            disconnectBtn.setVisibility(View.VISIBLE);
+//            connectBtn.setVisibility(View.GONE);
             btIntent = new Intent(this, DeviceList.class);
-            startActivityForResult(btIntent, 0);
+            startActivity(btIntent);
         }
 //        else if (view.getId() == R.id.btnDisconnect){
 //
@@ -195,16 +197,39 @@ public class MainActivity extends AppCompatActivity {
 //
        }
 
+
+    private void checkBT() {
+
+        adapterBT = BluetoothAdapter.getDefaultAdapter();
+
+        if (adapterBT == null) {
+            Toast.makeText(this, "Bluetooth not found!", Toast.LENGTH_SHORT).show();
+            finish();
+        }
+        if (!adapterBT.isEnabled()) {
+            turnOnBT();
+        }
+//        else if(adapterBT.isEnabled()){
+//            Toast.makeText(MainActivity.this, "Your bluetooth is already enabled", Toast.LENGTH_SHORT).show();
+//        }
+    }
+
+    private void turnOnBT() {
+        Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+        startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
+    }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == 0){
-
-            if (resultCode == RESULT_OK){
-                result = data.getIntExtra("result",-1);
-
-                Toast.makeText(this,result,Toast.LENGTH_SHORT).show();
+        if (requestCode == REQUEST_ENABLE_BT) {
+            if (resultCode == RESULT_CANCELED) {
+                Toast.makeText(this, "Bluetooth must be enabled!", Toast.LENGTH_SHORT).show();
+                finish();
+            }
+            if (resultCode == RESULT_OK) {
+                Toast.makeText(this, "bluetooth is enabled", Toast.LENGTH_SHORT).show();
+                finishActivity(REQUEST_ENABLE_BT);
             }
         }
 

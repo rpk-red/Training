@@ -20,12 +20,9 @@ import android.view.MenuItem;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.Switch;
 import android.widget.Toast;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.UUID;
@@ -38,7 +35,6 @@ public class DeviceList extends AppCompatActivity implements AdapterView.OnItemC
     private static final String LOG_TAG = "MainActivity";
     private static final int MESSAGE_READ = 1;
     private static final int SUCCESS_CONNECTED = 0;
-    public BluetoothAdapter adapterBT;
     private ListView listView;
     private ArrayAdapter<String> listAdapter;
     private ArrayList<String> pairedDevices;
@@ -56,10 +52,12 @@ public class DeviceList extends AppCompatActivity implements AdapterView.OnItemC
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.device_list);
-        checkBT();
         init();
         getPairedDevices();
         discoverBT();
+
+        //checkBT();
+
 
         MainActivity.disconnectBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -91,7 +89,7 @@ public class DeviceList extends AppCompatActivity implements AdapterView.OnItemC
                         returnIntent.putExtra("result",SUCCESS_CONNECTED);
                         setResult(RESULT_OK, returnIntent);
                         Log.d(LOG_TAG,"SAD SAM OVDE");
-                        finish();
+                        //finish();
                         break;
                 }
 
@@ -102,7 +100,7 @@ public class DeviceList extends AppCompatActivity implements AdapterView.OnItemC
 
     private void init() {
 
-        pairedDevices = new ArrayList<String>();
+        pairedDevices = new ArrayList<>();
         devices = new ArrayList<BluetoothDevice>();
         listView = (ListView) findViewById(R.id.listView);
         listAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
@@ -131,8 +129,8 @@ public class DeviceList extends AppCompatActivity implements AdapterView.OnItemC
 
 
                 } else if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(action)) {
-                    if (adapterBT.getState() == adapterBT.STATE_OFF) {
-                        turnOnBT();
+                    if (MainActivity.adapterBT.getState() == MainActivity.adapterBT.STATE_OFF) {
+                        //turnOnBT();
                     }
                 }
             }
@@ -144,6 +142,7 @@ public class DeviceList extends AppCompatActivity implements AdapterView.OnItemC
         registerReceiver(mReciver, mFilter);
         mFilter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
         registerReceiver(mReciver, mFilter);
+        //checkBT();
     }
 
     @Override
@@ -153,28 +152,30 @@ public class DeviceList extends AppCompatActivity implements AdapterView.OnItemC
     }
 
 
-    private void checkBT() {
-
-        adapterBT = BluetoothAdapter.getDefaultAdapter();
-
-        if (adapterBT == null) {
-            Toast.makeText(this, "Bluetooth not found!", Toast.LENGTH_SHORT).show();
-        }
-        if (!adapterBT.isEnabled()) {
-            turnOnBT();
-        }
-    }
-
-    private void turnOnBT() {
-        Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-        startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
-    }
+//    private void checkBT() {
+//
+//        adapterBT = BluetoothAdapter.getDefaultAdapter();
+//
+//        if (adapterBT == null) {
+//            Toast.makeText(this, "Bluetooth not found!", Toast.LENGTH_SHORT).show();
+//            finish();
+//        }
+//        if (!adapterBT.isEnabled()) {
+//            turnOnBT();
+//        }
+//    }
+//
+//    private void turnOnBT() {
+//        Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+//        startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
+//    }
 
 
     private void getPairedDevices() {
-        devicesArray = adapterBT.getBondedDevices();
+        devicesArray = MainActivity.adapterBT.getBondedDevices();
         if (devicesArray.size() > 0) {
             for (BluetoothDevice device : devicesArray)
+                //pairedDevices.add(adapterBT.getRemoteDevice(device.getAddress()));
                 pairedDevices.add(device.getName());
         }
     }
@@ -182,25 +183,24 @@ public class DeviceList extends AppCompatActivity implements AdapterView.OnItemC
     private void pairDevice(BluetoothDevice selectedDevice) {
 
         Intent intent = new Intent(selectedDevice.ACTION_PAIRING_REQUEST);
-        startActivityForResult(intent, REQUEST_ENABLE_PAIRING);
+        //startActivityForResult(intent, REQUEST_ENABLE_PAIRING);
+        startActivity(intent);
 
     }
 
 
-    private void unpairDevice(BluetoothDevice selectedDevice) {
-
-        //  Intent intent = new Intent(selectedDevice.ACTION_ACL_DISCONNECT_REQUESTED);
-        //  startActivity(intent);
-        //  finish();
-    }
+//    private void unpairDevice(BluetoothDevice selectedDevice) {
+//
+//        //  Intent intent = new Intent(selectedDevice.ACTION_ACL_DISCONNECT_REQUESTED);
+//        //  startActivity(intent);
+//        //  finish();
+//    }
 
     private void discoverBT() {
-        adapterBT.cancelDiscovery();
-        adapterBT.startDiscovery();
+        MainActivity.adapterBT.cancelDiscovery();
+        MainActivity.adapterBT.startDiscovery();
     }
 
-    public void onClickHandler(View view) {
-    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -211,12 +211,18 @@ public class DeviceList extends AppCompatActivity implements AdapterView.OnItemC
                 Toast.makeText(this, "Bluetooth must be enabled!", Toast.LENGTH_SHORT).show();
                 finish();
             }
-        } else if (requestCode == REQUEST_ENABLE_PAIRING) {
-            if (resultCode == RESULT_CANCELED) {
-                Toast.makeText(this, "You need to pair devices to connect!", Toast.LENGTH_SHORT).show();
-                finish();
+//            if (resultCode == RESULT_OK){
+//                Toast.makeText(this, "bluetooth is enabled", Toast.LENGTH_SHORT).show();
+//                init();
+//                getPairedDevices();
+//                discoverBT();
             }
-        }
+      //  } else if (requestCode == REQUEST_ENABLE_PAIRING) {
+      //      if (resultCode == RESULT_CANCELED) {
+     //           Toast.makeText(this, "You need to pair devices to connect!", Toast.LENGTH_SHORT).show();
+      //          finish();
+      //      }
+     //   }
     }
 
 
@@ -225,8 +231,8 @@ public class DeviceList extends AppCompatActivity implements AdapterView.OnItemC
 
 
         Log.d(LOG_TAG, "Kliknut");
-        if (adapterBT.isDiscovering()) {
-            adapterBT.cancelDiscovery();
+        if (MainActivity.adapterBT.isDiscovering()) {
+            MainActivity.adapterBT.cancelDiscovery();
         }
         if (listAdapter.getItem(position).contains("Paired")) {
 

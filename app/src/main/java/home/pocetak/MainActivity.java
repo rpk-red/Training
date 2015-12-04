@@ -1,13 +1,9 @@
 package home.pocetak;
 
-import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -17,28 +13,14 @@ import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
-    private static final int REQUEST_ENABLE_BT = 1;
-    private Integer result;
-    BluetoothSocket socket;
-    private static final int MESSAGE_READ = 1;
-    private Handler handler;
-    static Intent btIntent;
-    static EditText unesi;
-    static TextView ispisi;
-    //static Integer COUNTER = 0;
-    static boolean CLICKED_DISC = false;
-    static Button connectBtn;
-    static Button disconnectBtn;
-    static Boolean CONNECTED = false;
+
     private static final String LOG_TAG = "MainActivity";
-    static BluetoothAdapter adapterBT;
+    private static final UUID MY_UUID = UUID.fromString("f00001101-0000-1000-8000-00805F9B34FB");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,34 +31,18 @@ public class MainActivity extends AppCompatActivity {
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        checkBT();
-        Init();
+
         Button button = (Button) findViewById(R.id.buttonStart);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
                 sortiranje();
                 Log.d(LOG_TAG, "OnClick");
+
+
             }
         });
-
-        handler = new Handler(){
-
-            //String getKomanda = getIntent().getStringExtra("str_komanda");
-            @Override
-            public void handleMessage(Message msg) {
-                super.handleMessage(msg);
-
-                    switch (msg.what) {
-                        case MESSAGE_READ:
-                            byte[] readBuffer = (byte[]) msg.obj;
-                            Toast.makeText(MainActivity.this, readBuffer.toString(), Toast.LENGTH_LONG).show();
-                            break;
-                    }
-
-            }
-        };
-
 
     }
 
@@ -112,187 +78,79 @@ public class MainActivity extends AppCompatActivity {
 //        Log.d(LOG_TAG,"startClickHandler: " + dugme.getText());
 //    }
 
-    public void sortiranje()
-    {
-        unesi = (EditText) findViewById(R.id.text2unesi);
-        ispisi = (TextView) findViewById(R.id.text3);
+    public void sortiranje() {
+        EditText unesi = (EditText) findViewById(R.id.text2unesi);
+        TextView ispisi = (TextView) findViewById(R.id.text3);
         String uneto = unesi.getText().toString();
 
-        if(uneto.equalsIgnoreCase("NAPRED")) {
+        if (uneto.equalsIgnoreCase("NAPRED")) {
 
             ispisi.setText("IDEM NAPRED");
-
-        }
-        else if (uneto.equalsIgnoreCase("NAZAD")) {
+        } else if (uneto.equalsIgnoreCase("NAZAD")) {
 
             ispisi.setText("IDEM NAZAD");
-
-    }
-        else if (uneto.equalsIgnoreCase("LEVO")) {
+        } else if (uneto.equalsIgnoreCase("LEVO")) {
 
             ispisi.setText("IDEM LEVO");
-
-    }
-        else if (uneto.equalsIgnoreCase("DESNO")){
+        } else if (uneto.equalsIgnoreCase("DESNO")) {
 
             ispisi.setText("IDEM DESNO");
-
-    }
-        else{
+        } else {
 
             ispisi.setText("NISTA OVO NE VALJA");
-    }
+        }
     }
 
 
     public void btnClickHandler(View view) {
-
-        if(view.getId() == R.id.btnConnect && CONNECTED == false) {
-
-
-//            disconnectBtn.setVisibility(View.VISIBLE);
-//            connectBtn.setVisibility(View.GONE);
-            btIntent = new Intent(this, DeviceList.class);
-            startActivity(btIntent);
-        }
-//        else if (view.getId() == R.id.btnDisconnect){
+        Intent btIntent = new Intent(this, DeviceList.class);
+        startActivity(btIntent);
+    }
+//    private class ConnectThread extends Thread {
+//        private final BluetoothSocket mmSocket;
+//        private final BluetoothDevice mmDevice;
 //
-//            if(CONNECTED == true){
+//        public ConnectThread(BluetoothDevice device) {
+//            // Use a temporary object that is later assigned to mmSocket,
+//            // because mmSocket is final
+//            BluetoothSocket tmp = null;
+//            mmDevice = device;
 //
-////                disconnectBtn.setVisibility(View.GONE);
-////                connectBtn.setVisibility(View.VISIBLE);
-//                CLICKED_DISC = true;
-//                CONNECTED = false;
+//            // Get a BluetoothSocket to connect with the given BluetoothDevice
+//            try {
+//                // MY_UUID is the app's UUID string, also used by the server code
+//                tmp = device.createRfcommSocketToServiceRecord(MY_UUID);
+//            } catch (IOException e) { }
+//            mmSocket = tmp;
+//        }
+//
+//        public void run() {
+//            // Cancel discovery because it will slow down the connection
+//           // mBluetoothAdapter.cancelDiscovery();
+//
+//            try {
+//                // Connect the device through the socket. This will block
+//                // until it succeeds or throws an exception
+//                mmSocket.connect();
+//            } catch (IOException connectException) {
+//                // Unable to connect; close the socket and get out
+//                try {
+//                    mmSocket.close();
+//                } catch (IOException closeException) { }
+//                return;
 //            }
 //
+//            // Do work to manage the connection (in a separate thread)
+//          //  manageConnectedSocket(mmSocket);
 //        }
-
-    }
-    public void Init()
-    {
-        connectBtn = (Button) findViewById(R.id.btnConnect);
-        disconnectBtn = (Button) findViewById(R.id.btnDisconnect);
-        disconnectBtn.setVisibility(View.GONE);
-
-
-    }
-    public void mangeConnection(){
-
-        String k = "NAPRED";
-        if(result == 0) {
-            ConnectedThread connectedThread = new ConnectedThread(DeviceList.globalSocket);
-            connectedThread.write(k.getBytes());
-            Log.d(LOG_TAG, "POSLAO STRING");
-        }
-//        String str = null;
-//        if(disconnectBtn.isShown()){
-//            str = unesi.getText().toString();
-//        }
-//            if(str != null){
-//                btIntent.putExtra("str_komanda", str);
-//            }
-//            startActivity(btIntent);
 //
-//            sortiranje();
-//
-       }
-
-
-    private void checkBT() {
-
-        adapterBT = BluetoothAdapter.getDefaultAdapter();
-
-        if (adapterBT == null) {
-            Toast.makeText(this, "Bluetooth not found!", Toast.LENGTH_SHORT).show();
-            finish();
-        }
-        if (!adapterBT.isEnabled()) {
-            turnOnBT();
-        }
-//        else if(adapterBT.isEnabled()){
-//            Toast.makeText(MainActivity.this, "Your bluetooth is already enabled", Toast.LENGTH_SHORT).show();
+//        /** Will cancel an in-progress connection, and close the socket */
+//        public void cancel() {
+//            try {
+//                mmSocket.close();
+//            } catch (IOException e) { }
 //        }
-    }
-
-    private void turnOnBT() {
-        Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-        startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
-    }
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == REQUEST_ENABLE_BT) {
-            if (resultCode == RESULT_CANCELED) {
-                Toast.makeText(this, "Bluetooth must be enabled!", Toast.LENGTH_SHORT).show();
-                finish();
-            }
-            if (resultCode == RESULT_OK) {
-                Toast.makeText(this, "bluetooth is enabled", Toast.LENGTH_SHORT).show();
-                finishActivity(REQUEST_ENABLE_BT);
-            }
-        }
-
-    }
-    private class ConnectedThread extends Thread {
-
-        private final InputStream mmInStream;
-        private final OutputStream mmOutStream;
-        private final BluetoothSocket mmSocket;
+//    }
 
 
-        public ConnectedThread(BluetoothSocket Socket){
-
-            InputStream tmpIn = null;
-            OutputStream tmpOut = null;
-            mmSocket = Socket;
-
-            try {
-                tmpIn = Socket.getInputStream();
-                tmpOut = Socket.getOutputStream();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            mmInStream = tmpIn;
-            mmOutStream = tmpOut;
-        }
-
-        public void run() {
-
-            byte[] buffer = new byte[1024];
-            int bytes;
-
-            while (true) {
-
-                try {
-                    bytes = mmInStream.read(buffer);
-                    handler.obtainMessage(MESSAGE_READ, bytes, -1, buffer).sendToTarget();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    break;
-                }
-
-            }
-
-        }
-
-        public void write(byte[] bytes) {
-            try {
-                mmOutStream.write(bytes);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-        }
-
-        public void cancel() {
-            try {
-                mmSocket.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-
-            }
-        }
-    }
 }

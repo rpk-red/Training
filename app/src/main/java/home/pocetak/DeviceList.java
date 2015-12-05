@@ -4,14 +4,11 @@ package home.pocetak;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -22,32 +19,22 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Set;
-import java.util.UUID;
 
 public class DeviceList extends AppCompatActivity implements AdapterView.OnItemClickListener {
 
-    private static final int REQUEST_ENABLE_BT = 1;
     private static final int REQUEST_ENABLE_PAIRING = 2;
-    private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     private static final String LOG_TAG = "MainActivity";
-    private static final int MESSAGE_READ = 1;
     private static final int SUCCESS_CONNECTED = 0;
     private ListView listView;
     private ArrayAdapter<String> listAdapter;
     private ArrayList<String> pairedDevices;
     private ArrayList<BluetoothDevice> devices;
     private Set<BluetoothDevice> devicesArray;
-    private BroadcastReceiver mReciver;
+    private BroadcastReceiver mReceiver;
     private IntentFilter mFilter;
     BluetoothDevice device;
-    ConnectThread connect;
-    BluetoothDevice selectedDevice;
-     Handler handler;
-    static BluetoothSocket globalSocket;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,46 +42,6 @@ public class DeviceList extends AppCompatActivity implements AdapterView.OnItemC
         init();
         getPairedDevices();
         discoverBT();
-
-        //checkBT();
-
-
-        MainActivity.disconnectBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                connect.cancel();
-                MainActivity.disconnectBtn.setVisibility(View.GONE);
-                MainActivity.connectBtn.setVisibility(View.VISIBLE);
-                MainActivity.CONNECTED = false;
-
-                DeviceList.this.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(DeviceList.this, "YOU ARE NOW DISCONNECTED", Toast.LENGTH_LONG).show();
-
-                    }
-                });
-            }
-        });
-        handler = new Handler(){
-            @Override
-            public void handleMessage(Message msg) {
-                super.handleMessage(msg);
-
-                switch(msg.what){
-                    case SUCCESS_CONNECTED:
-                        //BluetoothSocket connectedSocket = (BluetoothSocket) msg.obj;
-                        Intent returnIntent = new Intent();
-                        returnIntent.putExtra("result",SUCCESS_CONNECTED);
-                        setResult(RESULT_OK, returnIntent);
-                        Log.d(LOG_TAG,"SAD SAM OVDE");
-                        //finish();
-                        break;
-                }
-
-            }
-        };
     }
 
 
@@ -107,7 +54,7 @@ public class DeviceList extends AppCompatActivity implements AdapterView.OnItemC
         listView.setAdapter(listAdapter);
         listView.setOnItemClickListener(this);
         mFilter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-        mReciver = new BroadcastReceiver() {
+        mReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 String action = intent.getAction();
@@ -130,52 +77,31 @@ public class DeviceList extends AppCompatActivity implements AdapterView.OnItemC
 
                 } else if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(action)) {
                     if (MainActivity.adapterBT.getState() == MainActivity.adapterBT.STATE_OFF) {
-                        //turnOnBT();
+                        Toast.makeText(DeviceList.this, "Your bluetooth is disabled, you have to enable it!", Toast.LENGTH_SHORT).show();
+                        finish();
                     }
                 }
             }
         };
-        registerReceiver(mReciver, mFilter);
+        registerReceiver(mReceiver, mFilter);
         mFilter = new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_STARTED);
-        registerReceiver(mReciver, mFilter);
+        registerReceiver(mReceiver, mFilter);
         mFilter = new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
-        registerReceiver(mReciver, mFilter);
+        registerReceiver(mReceiver, mFilter);
         mFilter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
-        registerReceiver(mReciver, mFilter);
-        //checkBT();
+        registerReceiver(mReceiver, mFilter);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        unregisterReceiver(mReciver);
+        unregisterReceiver(mReceiver);
     }
-
-
-//    private void checkBT() {
-//
-//        adapterBT = BluetoothAdapter.getDefaultAdapter();
-//
-//        if (adapterBT == null) {
-//            Toast.makeText(this, "Bluetooth not found!", Toast.LENGTH_SHORT).show();
-//            finish();
-//        }
-//        if (!adapterBT.isEnabled()) {
-//            turnOnBT();
-//        }
-//    }
-//
-//    private void turnOnBT() {
-//        Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-//        startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
-//    }
-
 
     private void getPairedDevices() {
         devicesArray = MainActivity.adapterBT.getBondedDevices();
         if (devicesArray.size() > 0) {
             for (BluetoothDevice device : devicesArray)
-                //pairedDevices.add(adapterBT.getRemoteDevice(device.getAddress()));
                 pairedDevices.add(device.getName());
         }
     }
@@ -205,24 +131,6 @@ public class DeviceList extends AppCompatActivity implements AdapterView.OnItemC
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == REQUEST_ENABLE_BT) {
-            if (resultCode == RESULT_CANCELED) {
-                Toast.makeText(this, "Bluetooth must be enabled!", Toast.LENGTH_SHORT).show();
-                finish();
-            }
-//            if (resultCode == RESULT_OK){
-//                Toast.makeText(this, "bluetooth is enabled", Toast.LENGTH_SHORT).show();
-//                init();
-//                getPairedDevices();
-//                discoverBT();
-            }
-      //  } else if (requestCode == REQUEST_ENABLE_PAIRING) {
-      //      if (resultCode == RESULT_CANCELED) {
-     //           Toast.makeText(this, "You need to pair devices to connect!", Toast.LENGTH_SHORT).show();
-      //          finish();
-      //      }
-     //   }
     }
 
 
@@ -231,95 +139,22 @@ public class DeviceList extends AppCompatActivity implements AdapterView.OnItemC
 
 
         Log.d(LOG_TAG, "Kliknut");
-        if (MainActivity.adapterBT.isDiscovering()) {
-            MainActivity.adapterBT.cancelDiscovery();
-        }
+//        if (MainActivity.adapterBT.isDiscovering()) {
+//            MainActivity.adapterBT.cancelDiscovery();
+//        }
         if (listAdapter.getItem(position).contains("Paired")) {
 
-            selectedDevice = devices.get(position);
-            connect = new ConnectThread(selectedDevice);
-            connect.start();
+            MainActivity.selectedDevice = devices.get(position);
+            MainActivity.flag = 1;
+            finish();
 
         } else {
             //selectedDevice = devices.get(position);
             Toast.makeText(this, "Device is not paired, you have to pair it 1st!", Toast.LENGTH_SHORT).show();
             //pairDevice(selectedDevice);
         }
-//        String[] itemSelected =  listAdapter.getItem(position).split("\n");
-//        Toast.makeText(this, "Name: " + itemSelected[0] + "\n" + "Adress:" + itemSelected[1],Toast.LENGTH_LONG).show();
-//        if (adapterBT.checkBluetoothAddress(itemSelected[1])== true)
-//            device = adapterBT.getRemoteDevice(itemSelected[1]);
     }
 
-    private class ConnectThread extends Thread {
-
-        private final BluetoothSocket mmSocket;
-        private final BluetoothDevice mmDevice;
-
-        public ConnectThread(BluetoothDevice device) {
-
-            BluetoothSocket tmp_socket = null;
-            mmDevice = device;
-
-            try {
-                tmp_socket = device.createRfcommSocketToServiceRecord(MY_UUID);
-            } catch (IOException e) {
-                Log.v(LOG_TAG, "GRESKA OVDE");
-            }
-
-            mmSocket = tmp_socket;
-
-        }
-
-        public void run() {
-
-            try {
-                mmSocket.connect();
-                Log.d(LOG_TAG, "VALJA ZA SADA");
-                MainActivity.CONNECTED = true;
-
-            } catch (Exception e) {
-
-                try {
-                    mmSocket.close();
-                    MainActivity.CONNECTED = false;
-                } catch (IOException closeException) {
-                    Log.v(LOG_TAG, "NEVALJA");
-                }
-
-            }
-
-            DeviceList.this.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(DeviceList.this, "YOU ARE NOW CONNECTED", Toast.LENGTH_LONG).show();
-
-                }
-            });
-
-            handler.obtainMessage(SUCCESS_CONNECTED).sendToTarget();
-            globalSocket = mmSocket;
-            Log.d(LOG_TAG,"STIGAO SAM DOVDE");
-            finish();
-        }
-
-        public void cancel() {
-            try {
-                mmSocket.close();
-            } catch (IOException e) {
-            }
-        }
-    }
-
-
-//    public static class L{
-//        public static void m(String message){
-//            Log.d(LOG_TAG, message);
-//        }
-//        public static void s(Context context,String message){
-//            Toast.makeText(context,message,Toast.LENGTH_SHORT).show();
-//        }
-//    }
 
         @Override
         public boolean onCreateOptionsMenu(Menu menu) {

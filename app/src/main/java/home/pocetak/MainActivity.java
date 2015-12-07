@@ -4,12 +4,14 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -23,81 +25,108 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.UUID;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements View.OnKeyListener {
     private static final int REQUEST_ENABLE_BT = 2;
     private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     private static final int MESSAGE_READ = 1;
     private static final int SUCCESS_CONNECTED = 0;
+    private static final int TYPED_IN = 2;
     private Handler handler;
     static Intent btIntent;
     static EditText unesi;
     static TextView ispisi;
     Button connectBtn;
-    Button disconnectBtn;
     private static final String LOG_TAG = "MainActivity";
     static BluetoothAdapter adapterBT;
     static BluetoothDevice selectedDevice;
     private ConnectThread connect;
     private ConnectedThread connected;
-    String uneto = "LEVO";
-    String vraceno = "nista";
-    static int flag =0;
+    String uneto = "";
+    String vraceno = "";
+    private int flag =0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         Log.d(LOG_TAG, "OnCreate");
-
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        if(flag == 1) {
-            flag = 0;
-            startConnect();
-        }
         checkBT();
         Init();
-        Button button = (Button) findViewById(R.id.buttonStart);
-        button.setOnClickListener(new View.OnClickListener() {
+        handler = new Handler(new Handler.Callback() {
             @Override
-            public void onClick(View view) {
-                sortiranje();
-                Log.d(LOG_TAG, "OnClick");
+            public boolean handleMessage(Message msg) {
+
+                connectBtn.setText(R.string.disconnect_btn);
+                switch (msg.what) {
+
+                    case SUCCESS_CONNECTED:
+                        connected = new ConnectedThread((BluetoothSocket) msg.obj);
+                        connected.start();
+                        try {
+                            connected.write(uneto.getBytes());
+                            sortiranje();
+                            Toast.makeText(MainActivity.this, "UPISAO JE: " + uneto, Toast.LENGTH_LONG).show();
+                        } catch (Exception e) {
+                            Log.d(LOG_TAG, "Connect exception" + e.getMessage());
+                        }
+                        break;
+
+                    case MESSAGE_READ:
+                        byte[] readBuffer = (byte[]) msg.obj;
+                        vraceno = readBuffer.toString();
+                        Toast.makeText(getApplicationContext(),"citas: " + vraceno, Toast.LENGTH_LONG).show();
+                        break;
+
+                    case TYPED_IN:
+                        String a = (String) msg.obj;
+                        connected.start();
+                        connected.write(a.getBytes());
+                        sortiranje();
+                        Toast.makeText(MainActivity.this, "UPISAO JE: " + a, Toast.LENGTH_LONG).show();
+                        break;
+                }
+                return false;
             }
         });
 
-        handler = new Handler(){
 
-            @Override
-            public void handleMessage(Message msg) {
-                super.handleMessage(msg);
-                disconnectBtn.setVisibility(View.VISIBLE);
-                connectBtn.setVisibility(View.GONE);
-                    switch (msg.what) {
-
-                        case SUCCESS_CONNECTED:
-                            connected = new ConnectedThread((BluetoothSocket) msg.obj);
-                            connected.start();
-                            Toast.makeText(MainActivity.this, "UPISAO JE OVO: " + uneto, Toast.LENGTH_LONG).show();
-                            try {
-                                connected.write(uneto.getBytes());
-                            } catch (Exception e) {
-                                Log.d(LOG_TAG, "Connect exception" + e.getMessage());
-                            }
-                        break;
-
-                        case MESSAGE_READ:
-                            byte[] readBuffer = (byte[]) msg.obj;
-                            vraceno = readBuffer.toString();
-                            Toast.makeText(getApplicationContext(),"citas: " + vraceno, Toast.LENGTH_LONG).show();
-                            break;
-                    }
-
-            }
-        };
-
-
+//            @Override
+//            public void handleMessage(Message msg) {
+//                super.handleMessage(msg);
+//                    connectBtn.setText(R.string.disconnect_btn);
+//                    switch (msg.what) {
+//
+//                        case SUCCESS_CONNECTED:
+//                            connected = new ConnectedThread((BluetoothSocket) msg.obj);
+//                            connected.start();
+//                            try {
+//                                connected.write(uneto.getBytes());
+//                                sortiranje();
+//                                Toast.makeText(MainActivity.this, "UPISAO JE: " + uneto, Toast.LENGTH_LONG).show();
+//                            } catch (Exception e) {
+//                                Log.d(LOG_TAG, "Connect exception" + e.getMessage());
+//                            }
+//                        break;
+//
+//                        case MESSAGE_READ:
+//                            byte[] readBuffer = (byte[]) msg.obj;
+//                            vraceno = readBuffer.toString();
+//                            Toast.makeText(getApplicationContext(),"citas: " + vraceno, Toast.LENGTH_LONG).show();
+//                            break;
+//
+//                        case TYPED_IN:
+//                            String a = (String) msg.obj;
+//                            connected.start();
+//                            connected.write(a.getBytes());
+//                            sortiranje();
+//                            Toast.makeText(MainActivity.this, "UPISAO JE: " + a, Toast.LENGTH_LONG).show();
+//                            break;
+//                    }
+//
+//            }
+//        };
     }
 
     @Override
@@ -129,11 +158,15 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        startConnect();
+      //  if (flag == 0) {
+            startConnect();
+       // }
+        Log.d(LOG_TAG, "onResume");
     }
 
     private void startConnect() {
         if(selectedDevice != null){
+            flag = 1;
             connect = new ConnectThread(selectedDevice);
             connect.start();
         }
@@ -142,33 +175,33 @@ public class MainActivity extends AppCompatActivity {
 
     public void sortiranje()
     {
-        unesi = (EditText) findViewById(R.id.text2unesi);
-        ispisi = (TextView) findViewById(R.id.text3);
-        uneto = unesi.getText().toString();
+//        unesi = (EditText) findViewById(R.id.text2unesi);
+//        ispisi = (TextView) findViewById(R.id.text3);
+//        uneto = unesi.getText().toString();
 
         if(uneto.equalsIgnoreCase("NAPRED")) {
 
-            ispisi.setText("IDEM NAPRED" + vraceno);
+            ispisi.setText("IDEM NAPRED " + "vraceno je: " + vraceno + "uneto je: " + uneto);
 
         }
         else if (uneto.equalsIgnoreCase("NAZAD")) {
 
-            ispisi.setText("IDEM NAZAD"  + vraceno);
+            ispisi.setText("IDEM NAZAD " + "vraceno je: "   + vraceno + "uneto je: " + uneto);
 
     }
         else if (uneto.equalsIgnoreCase("LEVO")) {
 
-            ispisi.setText("IDEM LEVO " + vraceno);
+            ispisi.setText("IDEM LEVO " + "vraceno je: "  + vraceno + "uneto je: " + uneto);
 
     }
         else if (uneto.equalsIgnoreCase("DESNO")){
 
-            ispisi.setText("IDEM DESNO"  + vraceno);
+            ispisi.setText("IDEM DESNO " + "vraceno je: "   + vraceno + "uneto je: " + uneto);
 
     }
         else{
 
-            ispisi.setText("NISTA OVO NE VALJA"  + vraceno);
+            ispisi.setText("NISTA OVO NE VALJA " + "vraceno je: "   + vraceno + "uneto je: " + uneto);
     }
     }
 
@@ -177,15 +210,17 @@ public class MainActivity extends AppCompatActivity {
 
         if(view.getId() == R.id.btnConnect) {
 
+            if(connectBtn.getText().toString().equalsIgnoreCase("connect") ){
                 btIntent = new Intent(this, DeviceList.class);
                 startActivity(btIntent);
-        }
-        if(view.getId() == R.id.btnDisconnect){
-            connected.cancel();
-            connect.cancel();
-            connectBtn.setVisibility(View.VISIBLE);
-            disconnectBtn.setVisibility(View.GONE);
-            Toast.makeText(MainActivity.this, "You are now disconnected!", Toast.LENGTH_SHORT).show();
+            }
+            else if(connectBtn.getText().toString().equalsIgnoreCase("disconnect")){
+                connected.cancel();
+                connect.cancel();
+                flag = 0;
+                connectBtn.setText(R.string.connect_btn);
+                Toast.makeText(MainActivity.this, "You are now disconnected!", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
@@ -193,8 +228,9 @@ public class MainActivity extends AppCompatActivity {
     {
         selectedDevice = null;
         connectBtn = (Button) findViewById(R.id.btnConnect);
-        disconnectBtn = (Button) findViewById(R.id.btnDisconnect);
-        disconnectBtn.setVisibility(View.GONE);
+        unesi = (EditText) findViewById(R.id.text2unesi);
+        ispisi = (TextView) findViewById(R.id.text3);
+        unesi.setOnKeyListener(this);
     }
 //    public void mangeConnection(){
 //
@@ -251,6 +287,15 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    @Override
+    public boolean onKey(View v, int keyCode, KeyEvent event) {
+
+       if (event.getKeyCode() == KeyEvent.FLAG_EDITOR_ACTION || flag == 1){
+            handler.obtainMessage(TYPED_IN, uneto);
+        }
+        return false;
+    }
+
     private class ConnectThread extends Thread {
 
         private final BluetoothSocket mmSocket;
@@ -264,7 +309,7 @@ public class MainActivity extends AppCompatActivity {
             try {
                 tmp_socket = device.createRfcommSocketToServiceRecord(MY_UUID);
             } catch (IOException e) {
-                Log.v(LOG_TAG, "GRESKA OVDE");
+                Log.v(LOG_TAG, "GRESKA kod uspostavljanja socket-a u ConnectThread-u.");
             }
 
             mmSocket = tmp_socket;
@@ -276,13 +321,13 @@ public class MainActivity extends AppCompatActivity {
             adapterBT.cancelDiscovery();
             try {
                 mmSocket.connect();
-                Log.d(LOG_TAG, "VALJA ZA SADA");
+                Log.d(LOG_TAG, "VALJA ZA SADA, odradio sam mmSocet.connect");
             } catch (Exception e) {
 
                 try {
                     mmSocket.close();
                 } catch (IOException closeException) {
-                    Log.v(LOG_TAG, "NEVALJA");
+                    Log.v(LOG_TAG, "NEVALJA, nisam odradio mmSocket.connect");
                 }
 
             }
@@ -296,7 +341,7 @@ public class MainActivity extends AppCompatActivity {
             });
 
             handler.obtainMessage(SUCCESS_CONNECTED, mmSocket).sendToTarget();
-            Log.d(LOG_TAG,"STIGAO SAM DOVDE");
+            Log.d(LOG_TAG,"Odradio sam handler.obtainMsg u ConnectThread-u");
 
         }
 
@@ -304,6 +349,7 @@ public class MainActivity extends AppCompatActivity {
             try {
                 mmSocket.close();
             } catch (IOException e) {
+                Log.d(LOG_TAG, "Nije uspeo da zatvori mmSocet u ConnectThread-u. ");
             }
         }
     }
@@ -373,11 +419,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
+        Log.d(LOG_TAG, "onStop");
     }
 
     @Override
@@ -388,22 +430,36 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        Log.d(LOG_TAG, "onDestroy");
     }
 
     @Override
     protected void onRestart() {
         super.onRestart();
+        Log.d(LOG_TAG, "onRestart");
 
     }
 
+//    @Override
+//    protected void onSaveInstanceState(Bundle outState) {
+//        super.onSaveInstanceState(outState);
+//        outState.putString("str", connectBtn.getText().toString());
+//    }
+
+//    @Override
+//    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+//        super.onRestoreInstanceState(savedInstanceState);
+//        connectBtn.setText(savedInstanceState.getString("str"));
+//   }
+
     @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
 
-        connectBtn.getVisibility();
-        disconnectBtn.getVisibility();
-
-
-
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            Log.e(LOG_TAG, "ORIENTATION_LANDSCAPE");
+        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
+            Log.e(LOG_TAG, "ORIENTATION_PORTRAIT");
+        }
     }
 }

@@ -13,7 +13,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <!--<application>-->
-            <!--<service android:name="communication"/>-->
+        <!--<service android:name="communication"/>-->
         <!--</application>-->
         <activity
             android:name=".DeviceList"
@@ -22,7 +22,8 @@
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
-            android:theme="@style/AppTheme.NoActionBar">
+            android:theme="@style/AppTheme.NoActionBar"
+            android:configChanges="orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

@@ -86,43 +86,6 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
                 }
             }
         };
-
-
-//            @Override
-//            public void handleMessage(Message msg) {
-//                super.handleMessage(msg);
-//                    connectBtn.setText(R.string.disconnect_btn);
-//                    switch (msg.what) {
-//
-//                        case SUCCESS_CONNECTED:
-//                            connected = new ConnectedThread((BluetoothSocket) msg.obj);
-//                            connected.start();
-//                            try {
-//                                connected.write(uneto.getBytes());
-//                                sortiranje();
-//                                Toast.makeText(MainActivity.this, "UPISAO JE: " + uneto, Toast.LENGTH_LONG).show();
-//                            } catch (Exception e) {
-//                                Log.d(LOG_TAG, "Connect exception" + e.getMessage());
-//                            }
-//                        break;
-//
-//                        case MESSAGE_READ:
-//                            byte[] readBuffer = (byte[]) msg.obj;
-//                            vraceno = readBuffer.toString();
-//                            Toast.makeText(getApplicationContext(),"citas: " + vraceno, Toast.LENGTH_LONG).show();
-//                            break;
-//
-//                        case TYPED_IN:
-//                            String a = (String) msg.obj;
-//                            connected.start();
-//                            connected.write(a.getBytes());
-//                            sortiranje();
-//                            Toast.makeText(MainActivity.this, "UPISAO JE: " + a, Toast.LENGTH_LONG).show();
-//                            break;
-//                    }
-//
-//            }
-//        };
     }
 
     @Override
@@ -205,26 +168,6 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
         ispisi = (TextView) findViewById(R.id.text3);
         unesi.setOnKeyListener(this);
     }
-//    public void mangeConnection(){
-//
-//        String k = "NAPRED";
-//        if(result == 0) {
-//            ConnectedThread connectedThread = new ConnectedThread(DeviceList.globalSocket);
-//            connectedThread.write(k.getBytes());
-//            Log.d(LOG_TAG, "POSLAO STRING");
-//        }
-////        String str = null;
-////        if(disconnectBtn.isShown()){
-////            str = unesi.getText().toString();
-////        }
-////            if(str != null){
-////                btIntent.putExtra("str_komanda", str);
-////            }
-////            startActivity(btIntent);
-////
-////            sortiranje();
-////
-//       }
 
     private void checkBT() {
 

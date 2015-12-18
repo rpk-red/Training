@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -23,6 +24,7 @@ import android.widget.Toast;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity implements View.OnKeyListener {
@@ -54,44 +56,36 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
         setSupportActionBar(toolbar);
         checkBT();
         Init();
-        handler = new Handler(new Handler.Callback() {
+        handler = new Handler() {
             @Override
-            public boolean handleMessage(Message msg) {
-
+            public void handleMessage(Message msg) {
+            super.handleMessage(msg);
                 connectBtn.setText(R.string.disconnect_btn);
                 switch (msg.what) {
 
                     case SUCCESS_CONNECTED:
                         connected = new ConnectedThread((BluetoothSocket) msg.obj);
                         connected.start();
-//                        try {
-//                           // connected.write(uneto.getBytes());
-//                           // sortiranje();
-//                            //Toast.makeText(MainActivity.this, "UPISAO JE: " + uneto, Toast.LENGTH_LONG).show();
-//                        } catch (Exception e) {
-//                            Log.d(LOG_TAG, "Connect exception" + e.getMessage());
-//                        }
                         break;
 
                     case MESSAGE_READ:
-                        byte[] readBuffer = (byte[]) msg.obj;
-                        vraceno = readBuffer.toString();
-                        Toast.makeText(getApplicationContext(),"citas: " + vraceno, Toast.LENGTH_LONG).show();
+                        String readBuffer = new String ( (byte[]) (msg.obj) );
+                        //String vraceno1 = new String(readBuffer.toString());
+                        Toast.makeText(getApplicationContext(),"citas: " + readBuffer, Toast.LENGTH_LONG).show();
                         sortiranje();
                         break;
 
                     case TYPED_IN:
-                        String a = (String) msg.obj;
-                        a.concat("\n\r");
-                        //connected.start();
-                        connected.write(a.getBytes());
+                        String a =  new String ((String)msg.obj);
+                        a.concat("\r\n");
+                        byte[] byteArr = a.getBytes();
+                        connected.write(byteArr);
                         //sortiranje();
                         Toast.makeText(MainActivity.this, "UPISAO JE: " + a, Toast.LENGTH_LONG).show();
                         break;
                 }
-                return false;
             }
-        });
+        };
 
 
 //            @Override
@@ -288,7 +282,7 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
             mmDevice = device;
 
             try {
-                tmp_socket = device.createRfcommSocketToServiceRecord(MY_UUID);
+                tmp_socket = mmDevice.createRfcommSocketToServiceRecord(MY_UUID);
             } catch (IOException e) {
                 Log.v(LOG_TAG, "GRESKA kod uspostavljanja socket-a u ConnectThread-u.");
             }
@@ -366,9 +360,11 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
             while (true) {
 
                 try {
-                    buffer =new byte[1024];
-                    bytes = mmInStream.read(buffer);
-                    handler.obtainMessage(MESSAGE_READ, bytes, -1, buffer).sendToTarget();
+//                    buffer = new byte[1024];
+//                    bytes = mmInStream.read(buffer);
+                    byte[] buffer1 = new byte[1024];
+                    mmInStream.read(buffer1);
+                    handler.obtainMessage(MESSAGE_READ, 0, -1, buffer1).sendToTarget();
                 } catch (IOException e) {
                     e.printStackTrace();
                     break;
@@ -380,7 +376,7 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
 
         public void write(byte[] bytes) {
             try {
-                mmOutStream.write(bytes);
+                mmOutStream.write(bytes, 0, 3);
                 mmOutStream.flush();
             } catch (IOException e) {
                 e.printStackTrace();

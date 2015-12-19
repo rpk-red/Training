@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -24,7 +23,6 @@ import android.widget.Toast;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Arrays;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity implements View.OnKeyListener {
@@ -43,8 +41,8 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
     static BluetoothDevice selectedDevice;
     private ConnectThread connect;
     private ConnectedThread connected;
-    String uneto = "";
-    String vraceno = "";
+    String uneto;
+    String vraceno;
     private int flag =0;
 
     @Override
@@ -56,10 +54,11 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
         setSupportActionBar(toolbar);
         checkBT();
         Init();
-        handler = new Handler() {
+        handler = new Handler(new Handler.Callback() {
+
             @Override
-            public void handleMessage(Message msg) {
-            super.handleMessage(msg);
+            public boolean handleMessage(Message msg) {
+
                 connectBtn.setText(R.string.disconnect_btn);
                 switch (msg.what) {
 
@@ -69,23 +68,23 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
                         break;
 
                     case MESSAGE_READ:
-                        String readBuffer = new String ( (byte[]) (msg.obj) );
-                        //String vraceno1 = new String(readBuffer.toString());
-                        Toast.makeText(getApplicationContext(),"citas: " + readBuffer, Toast.LENGTH_LONG).show();
+                        vraceno = new String ( (byte[]) msg.obj );
+                        Toast.makeText(getApplicationContext(),"citas: " + vraceno, Toast.LENGTH_LONG).show();
                         sortiranje();
                         break;
 
                     case TYPED_IN:
-                        String a =  new String ((String)msg.obj);
-                        a.concat("\r\n");
-                        byte[] byteArr = a.getBytes();
-                        connected.write(byteArr);
-                        //sortiranje();
-                        Toast.makeText(MainActivity.this, "UPISAO JE: " + a, Toast.LENGTH_LONG).show();
+                        String a = (String) msg.obj;
+                        String b = a.concat("\r\n");
+                        connected.write(b.getBytes());
+                        sortiranje();
+                        Toast.makeText(MainActivity.this, "UPISAO JE: " + b, Toast.LENGTH_LONG).show();
                         break;
                 }
+                return false;
             }
-        };
+        });
+
     }
 
     @Override
@@ -117,9 +116,7 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
     @Override
     protected void onResume() {
         super.onResume();
-        //  if (flag == 0) {
         startConnect();
-        // }
         Log.d(LOG_TAG, "onResume");
     }
 
@@ -134,9 +131,6 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
 
     public void sortiranje()
     {
-//        unesi = (EditText) findViewById(R.id.text2unesi);
-//        ispisi = (TextView) findViewById(R.id.text3);
-//        uneto = unesi.getText().toString();
         ispisi.setText("vraceno je: " + vraceno + " uneto je: " + uneto);
     }
 
@@ -166,6 +160,7 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
         connectBtn = (Button) findViewById(R.id.btnConnect);
         unesi = (EditText) findViewById(R.id.text2unesi);
         ispisi = (TextView) findViewById(R.id.text3);
+        uneto = unesi.getText().toString();
         unesi.setOnKeyListener(this);
     }
 
@@ -200,13 +195,12 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
                 finishActivity(REQUEST_ENABLE_BT);
             }
         }
-
     }
 
     @Override
     public boolean onKey(View v, int keyCode, KeyEvent event) {
 
-        if (event.getKeyCode() == KeyEvent.KEYCODE_ENTER && flag == 1){
+        if (event.getKeyCode() == KeyEvent.KEYCODE_ENTER && flag == 1 && event.getAction() != KeyEvent.ACTION_DOWN){
             Log.d(LOG_TAG,keyCode + " " + event.getKeyCode());
             uneto = unesi.getText().toString();
             handler.obtainMessage(TYPED_IN, uneto).sendToTarget();
@@ -303,11 +297,9 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
             while (true) {
 
                 try {
-//                    buffer = new byte[1024];
-//                    bytes = mmInStream.read(buffer);
-                    byte[] buffer1 = new byte[1024];
-                    mmInStream.read(buffer1);
-                    handler.obtainMessage(MESSAGE_READ, 0, -1, buffer1).sendToTarget();
+                    buffer = new byte[1024];
+                    bytes = mmInStream.read(buffer);
+                    handler.obtainMessage(MESSAGE_READ, bytes, -1, buffer).sendToTarget();
                 } catch (IOException e) {
                     e.printStackTrace();
                     break;
@@ -319,8 +311,8 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
 
         public void write(byte[] bytes) {
             try {
-                mmOutStream.write(bytes, 0, 3);
-                mmOutStream.flush();
+                mmOutStream.write(bytes);
+               // mmOutStream.flush();
             } catch (IOException e) {
                 e.printStackTrace();
             }

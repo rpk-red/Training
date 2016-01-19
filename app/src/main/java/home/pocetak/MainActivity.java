@@ -3,8 +3,12 @@ package home.pocetak;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -12,11 +16,15 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -25,7 +33,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.UUID;
 
-public class MainActivity extends AppCompatActivity implements View.OnKeyListener {
+public class MainActivity extends AppCompatActivity implements View.OnKeyListener, View.OnTouchListener{
     private static final int REQUEST_ENABLE_BT = 2;
     private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     private static final int MESSAGE_READ = 1;
@@ -43,12 +51,18 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
     private ConnectedThread connected;
     String uneto;
     String vraceno;
-    private int flag =0;
+    private int flag = 0;
+    public Bitmap bitmap;
+    public float x, y;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_main);
+
+
+
         Log.d(LOG_TAG, "OnCreate");
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -68,16 +82,16 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
                         break;
 
                     case MESSAGE_READ:
-                        vraceno = new String ( (byte[]) msg.obj );
-                        Toast.makeText(getApplicationContext(),"citas: " + vraceno, Toast.LENGTH_LONG).show();
-                        sortiranje();
+                        vraceno = new String((byte[]) msg.obj);
+                        Toast.makeText(getApplicationContext(), "citas: " + vraceno, Toast.LENGTH_LONG).show();
+                        showStream();
                         break;
 
                     case TYPED_IN:
                         String a = (String) msg.obj;
                         String b = a.concat("\r\n");
                         connected.write(b.getBytes());
-                        sortiranje();
+                        showStream();
                         Toast.makeText(MainActivity.this, "UPISAO JE: " + b, Toast.LENGTH_LONG).show();
                         break;
                 }
@@ -113,15 +127,9 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        startConnect();
-        Log.d(LOG_TAG, "onResume");
-    }
 
     private void startConnect() {
-        if(selectedDevice != null){
+        if (selectedDevice != null) {
             flag = 1;
             connect = new ConnectThread(selectedDevice);
             connect.start();
@@ -129,21 +137,19 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
 
     }
 
-    public void sortiranje()
-    {
+    public void showStream() {
         ispisi.setText("vraceno je: " + vraceno + " uneto je: " + uneto);
     }
 
 
     public void btnClickHandler(View view) {
 
-        if(view.getId() == R.id.btnConnect) {
+        if (view.getId() == R.id.btnConnect) {
 
-            if(connectBtn.getText().toString().equalsIgnoreCase("connect") ){
+            if (connectBtn.getText().toString().equalsIgnoreCase("connect")) {
                 btIntent = new Intent(this, DeviceList.class);
                 startActivity(btIntent);
-            }
-            else if(connectBtn.getText().toString().equalsIgnoreCase("disconnect")){
+            } else if (connectBtn.getText().toString().equalsIgnoreCase("disconnect")) {
                 connected.cancel();
                 connect.cancel();
                 flag = 0;
@@ -154,14 +160,20 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
         }
     }
 
-    public void Init()
-    {
+    public void Init() {
+//        newSurface = new SurfaceThread(this);
+//        RelativeLayout surface = (RelativeLayout) findViewById(R.id.surfaceView);
+//        surface.addView(newSurface);
+
         selectedDevice = null;
         connectBtn = (Button) findViewById(R.id.btnConnect);
         unesi = (EditText) findViewById(R.id.text2unesi);
         ispisi = (TextView) findViewById(R.id.text3);
         uneto = unesi.getText().toString();
         unesi.setOnKeyListener(this);
+
+        bitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.ball);
+        x = y = 0;
     }
 
     private void checkBT() {
@@ -181,6 +193,7 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
         Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
         startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
     }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -200,13 +213,19 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
     @Override
     public boolean onKey(View v, int keyCode, KeyEvent event) {
 
-        if (event.getKeyCode() == KeyEvent.KEYCODE_ENTER && flag == 1 && event.getAction() != KeyEvent.ACTION_DOWN){
-            Log.d(LOG_TAG,keyCode + " " + event.getKeyCode());
+        if (event.getKeyCode() == KeyEvent.KEYCODE_ENTER && flag == 1 && event.getAction() != KeyEvent.ACTION_DOWN) {
+            Log.d(LOG_TAG, keyCode + " " + event.getKeyCode());
             uneto = unesi.getText().toString();
             handler.obtainMessage(TYPED_IN, uneto).sendToTarget();
         }
         return false;
     }
+
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        return false;
+    }
+
 
     private class ConnectThread extends Thread {
 
@@ -253,7 +272,7 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
             });
 
             handler.obtainMessage(SUCCESS_CONNECTED, mmSocket).sendToTarget();
-            Log.d(LOG_TAG,"Odradio sam handler.obtainMsg u ConnectThread-u");
+            Log.d(LOG_TAG, "Odradio sam handler.obtainMsg u ConnectThread-u");
 
         }
 
@@ -265,6 +284,7 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
             }
         }
     }
+
     private class ConnectedThread extends Thread {
 
         private final InputStream mmInStream;
@@ -272,7 +292,7 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
         private final BluetoothSocket mmSocket;
 
 
-        public ConnectedThread(BluetoothSocket Socket){
+        public ConnectedThread(BluetoothSocket Socket) {
 
             InputStream tmpIn = null;
             OutputStream tmpOut = null;
@@ -312,7 +332,7 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
         public void write(byte[] bytes) {
             try {
                 mmOutStream.write(bytes);
-               // mmOutStream.flush();
+                // mmOutStream.flush();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -336,6 +356,13 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        startConnect();
+        Log.d(LOG_TAG, "onResume");
+    }
+
+    @Override
     protected void onStart() {
         super.onStart();
     }
@@ -353,7 +380,13 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
 
     }
 
-//    @Override
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+    }
+
+    //    @Override
 //    protected void onSaveInstanceState(Bundle outState) {
 //        super.onSaveInstanceState(outState);
 //        outState.putString("str", connectBtn.getText().toString());
@@ -375,4 +408,10 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
             Log.e(LOG_TAG, "ORIENTATION_PORTRAIT");
         }
     }
+
+
+
+
 }
+
+

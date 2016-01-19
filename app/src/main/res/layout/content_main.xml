@@ -55,5 +55,14 @@
         android:layout_centerHorizontal="true"
         android:layout_marginTop="30dp"/>
 
+    <home.pocetak.MySurfaceView
+        android:layout_width="500dp"
+        android:layout_height="500dp"
+        android:id="@+id/surfaceView"
+        android:layout_below="@+id/btnConnect"
+        android:layout_marginTop="100dp"
+        android:layout_centerHorizontal="true"
+        />
+
 
 </RelativeLayout>

@@ -360,6 +360,7 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
         super.onResume();
         startConnect();
         Log.d(LOG_TAG, "onResume");
+
     }
 
     @Override

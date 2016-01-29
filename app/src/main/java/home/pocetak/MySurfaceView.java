@@ -7,45 +7,21 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.util.AttributeSet;
-import android.util.FloatMath;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 
-import java.io.IOException;
-import java.util.logging.Handler;
-import java.util.logging.LogRecord;
-
-
 public class MySurfaceView extends SurfaceView implements SurfaceHolder.Callback{
 
-    Thread t = null;
-    boolean running = false;
+    boolean running = true;
     MySurfaceThread thread;
     Paint paint1;
     float x, y, dx, dy, angle, c;
     int zeroX, zeroY, radius;
     private Bitmap ball, pozadina;
-    Handler handler = new Handler() {
-        @Override
-        public void close() {
-
-        }
-
-        @Override
-        public void flush() {
-
-        }
-
-        @Override
-        public void publish(LogRecord record) {
-
-        }
-    };
 
     public MySurfaceView(Context context) {
         super(context);
@@ -68,7 +44,7 @@ public class MySurfaceView extends SurfaceView implements SurfaceHolder.Callback
         init();
     }
 
-    private void init() {
+    private  void init() {
 
         thread = new MySurfaceThread(getHolder(),this);
         getHolder().addCallback(this);
@@ -88,7 +64,6 @@ public class MySurfaceView extends SurfaceView implements SurfaceHolder.Callback
     public void surfaceCreated(SurfaceHolder holder) {
 
         thread.start();
-        //thread.execute((Void[])null);
     }
 
     @Override
@@ -101,12 +76,14 @@ public class MySurfaceView extends SurfaceView implements SurfaceHolder.Callback
 
         while (true) {
             try {
-                thread.join(500);
+                running = false;
+                thread.join();
                 break;
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
+
 
 
     }
@@ -136,9 +113,8 @@ public class MySurfaceView extends SurfaceView implements SurfaceHolder.Callback
 
     public class MySurfaceThread extends Thread{
 
-        SurfaceHolder mSurfaceHolder;
-        MySurfaceView mySurfaceView;
-        boolean running = true;
+         final SurfaceHolder mSurfaceHolder;
+         final MySurfaceView mySurfaceView;
 
 
         public MySurfaceThread(SurfaceHolder surfaceHolder, MySurfaceView surfaceView){
@@ -239,47 +215,14 @@ public class MySurfaceView extends SurfaceView implements SurfaceHolder.Callback
 
         }
         public void cancel() {
-            try {
-               thread = null;
-            } catch (Exception e) {
-                e.printStackTrace();
-
-            }
+                running = false;
+        }
+        public void onResume(){
+            running = true;
+            init();
         }
 
-//        @Override
-//        protected Void doInBackground(Void... params) {
-//
-//            Canvas canvas = null;
-//            try {
-//                canvas = mSurfaceHolder.lockCanvas(null);
-//                synchronized (mSurfaceHolder) {
-//                    zeroX = canvas.getWidth()/2;
-//                    zeroY = canvas.getHeight()/2;
-//
-//                    canvas.drawRGB(255, 255, 255);
-//                    canvas.drawBitmap(pozadina, canvas.getWidth()/2-pozadina.getWidth()/2, canvas.getHeight()/2-pozadina.getHeight()/2, null);
-//                    canvas.drawText(String.valueOf(x), 20, 40, paint1);
-//                    canvas.drawText(String.valueOf(y), 20, 100, paint1);
-//                    if (x == 0 && y == 0) {
-//                        canvas.drawBitmap(ball, canvas.getWidth() / 2 - ball.getWidth() / 2, canvas.getHeight() / 2 - ball.getHeight() / 2, null);
-//                    }
-//                    else {
-//                        canvas.drawBitmap(ball, x - ball.getWidth()/2, y - ball.getHeight()/2, null);
-//                    }
-//
-//                }
-//
-//                Thread.sleep(50);
-//
-//            } catch (InterruptedException e) {
-//            } finally {
-//                if (canvas != null) {
-//                    mSurfaceHolder.unlockCanvasAndPost(canvas);
-//                }
-//            }
-//
-//            return null;
-//        }
+
+
     }
 }

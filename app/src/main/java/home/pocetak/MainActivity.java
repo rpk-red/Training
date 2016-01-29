@@ -3,12 +3,10 @@ package home.pocetak;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
-import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -17,14 +15,12 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -54,15 +50,15 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
     private int flag = 0;
     public Bitmap bitmap;
     public float x, y;
+    MySurfaceView surf;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
-
-
-
+        surf = (MySurfaceView) findViewById(R.id.surfaceView);
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
         Log.d(LOG_TAG, "OnCreate");
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -226,7 +222,6 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
         return false;
     }
 
-
     private class ConnectThread extends Thread {
 
         private final BluetoothSocket mmSocket;
@@ -353,12 +348,16 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
     protected void onStop() {
         super.onStop();
         Log.d(LOG_TAG, "onStop");
+        surf.thread.cancel();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         startConnect();
+       if(surf.running == false){
+           surf.thread.onResume();
+       }
         Log.d(LOG_TAG, "onResume");
 
     }
@@ -384,6 +383,7 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
     @Override
     protected void onPause() {
         super.onPause();
+        surf.thread.cancel();
 
     }
 
@@ -409,8 +409,6 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
             Log.e(LOG_TAG, "ORIENTATION_PORTRAIT");
         }
     }
-
-
 
 
 }

@@ -9,12 +9,13 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.os.Build;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 
-public class MySurfaceView extends SurfaceView implements SurfaceHolder.Callback{
+public class MySurfaceView extends SurfaceView implements SurfaceHolder.Callback {
 
     boolean running = true;
     MySurfaceThread thread;
@@ -45,6 +46,7 @@ public class MySurfaceView extends SurfaceView implements SurfaceHolder.Callback
     }
 
     private  void init() {
+
 
         thread = new MySurfaceThread(getHolder(),this);
         getHolder().addCallback(this);
@@ -89,7 +91,7 @@ public class MySurfaceView extends SurfaceView implements SurfaceHolder.Callback
     }
 
 
-    public void draw(Canvas canvas, float localX, float localY, int zx, int zy) {
+    protected void draw(Canvas canvas, float localX, float localY, int zx, int zy) {
         super.draw(canvas);
 
         Bitmap scaledBitmap = Bitmap.createScaledBitmap(pozadina,
@@ -97,9 +99,9 @@ public class MySurfaceView extends SurfaceView implements SurfaceHolder.Callback
                 this.getHeight(),
                 true);
         canvas.drawRGB(255, 255, 255);
-        canvas.drawBitmap(scaledBitmap, canvas.getWidth()/2-scaledBitmap.getWidth()/2, canvas.getHeight()/2-scaledBitmap.getHeight()/2, null);
-        canvas.drawText(String.valueOf(localX), 20, 40, paint1);
-        canvas.drawText(String.valueOf(localY), 20, 100, paint1);
+        canvas.drawBitmap(scaledBitmap, canvas.getWidth() / 2 - scaledBitmap.getWidth() / 2, canvas.getHeight() / 2 - scaledBitmap.getHeight() / 2, null);
+        canvas.drawText(String.valueOf(Math.round(Math.toDegrees(angle))), 20, 40, paint1);
+        canvas.drawText(String.valueOf(c), 20, 100, paint1);
         if (localX == 0 && localY == 0) {
             canvas.drawBitmap(ball, canvas.getWidth() / 2 - ball.getWidth() / 2, canvas.getHeight() / 2 - ball.getHeight() / 2, null);
         }
@@ -115,12 +117,15 @@ public class MySurfaceView extends SurfaceView implements SurfaceHolder.Callback
 
          final SurfaceHolder mSurfaceHolder;
          final MySurfaceView mySurfaceView;
-
+         float promenaX;
+         float promenaY;
 
         public MySurfaceThread(SurfaceHolder surfaceHolder, MySurfaceView surfaceView){
 
             mSurfaceHolder = surfaceHolder;
             mySurfaceView = surfaceView;
+
+
 
             mySurfaceView.setOnTouchListener(new OnTouchListener() {
                 @Override
@@ -131,13 +136,16 @@ public class MySurfaceView extends SurfaceView implements SurfaceHolder.Callback
                         case MotionEvent.ACTION_UP:
                             x = y = 0;
                             dx = dy = 0;
+                            angle = 0;
+                            c = 0;
                             break;
                         case MotionEvent.ACTION_DOWN:
-                            x = event.getX();
-                            y = event.getY();
-                            calculateValues(x, y);
                             break;
                         case MotionEvent.ACTION_MOVE:
+                            promenaX = Math.round(x);
+                            promenaY = Math.round(y);
+                            Log.d(MainActivity.LOG_TAG,"promenaX je:" + promenaX);
+                            Log.d(MainActivity.LOG_TAG,"promenaY je:" + promenaY);
                             x = event.getX();
                             y = event.getY();
                             calculateValues(x, y);
@@ -145,7 +153,13 @@ public class MySurfaceView extends SurfaceView implements SurfaceHolder.Callback
                         case MotionEvent.ACTION_CANCEL:
                             break;
                     }
+                    if (MainActivity.flag == 1 && (promenaX != Math.round(x) || promenaY != Math.round(y))) {
 
+                        Log.d(MainActivity.LOG_TAG,"X je:" + x);
+                        Log.d(MainActivity.LOG_TAG,"Y je:" + y);
+                        long i = Math.round(Math.toDegrees(angle));
+                        MainActivity.handler.obtainMessage(MainActivity.TOUCHED, i).sendToTarget();
+                    }
                     return true;
                 }
 
@@ -200,7 +214,7 @@ public class MySurfaceView extends SurfaceView implements SurfaceHolder.Callback
                     synchronized (mSurfaceHolder) {
                         zeroX = canvas.getWidth()/2;
                         zeroY = canvas.getHeight()/2;
-                        mySurfaceView.draw(canvas,x, y, zeroX, zeroY);
+                        mySurfaceView.draw(canvas, x, y, zeroX, zeroY);
                     }
 
                     Thread.sleep(50);

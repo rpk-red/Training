@@ -14,7 +14,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.view.MotionEvent;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -29,28 +29,30 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.UUID;
 
-public class MainActivity extends AppCompatActivity implements View.OnKeyListener, View.OnTouchListener{
+public class MainActivity extends AppCompatActivity implements View.OnKeyListener {
     private static final int REQUEST_ENABLE_BT = 2;
     private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     private static final int MESSAGE_READ = 1;
     private static final int SUCCESS_CONNECTED = 0;
-    private static final int TYPED_IN = 2;
-    private Handler handler;
+    private final int TYPED_IN = 2;
+    protected static final int TOUCHED = 5;
+    public static Handler handler;
     static Intent btIntent;
     static EditText unesi;
     static TextView ispisi;
     Button connectBtn;
-    private static final String LOG_TAG = "MainActivity";
+    protected static final String LOG_TAG = "MainActivity";
     static BluetoothAdapter adapterBT;
     static BluetoothDevice selectedDevice;
     private ConnectThread connect;
     private ConnectedThread connected;
     String uneto;
     String vraceno;
-    private int flag = 0;
+    protected static int flag = 0;
     public Bitmap bitmap;
     public float x, y;
     MySurfaceView surf;
+    SurfaceView surf2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +60,7 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
 
         setContentView(R.layout.activity_main);
         surf = (MySurfaceView) findViewById(R.id.surfaceView);
+        surf2  = (SurfaceView) findViewById(R.id.surfaceView2);
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
         Log.d(LOG_TAG, "OnCreate");
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -89,6 +92,13 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
                         connected.write(b.getBytes());
                         showStream();
                         Toast.makeText(MainActivity.this, "UPISAO JE: " + b, Toast.LENGTH_LONG).show();
+                        break;
+
+                    case TOUCHED:
+                        Long fi = (Long) msg.obj;
+                        a = fi.toString();
+                        b = a.concat("\r\n");
+                        connected.write(b.getBytes());
                         break;
                 }
                 return false;
@@ -157,9 +167,6 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
     }
 
     public void Init() {
-//        newSurface = new SurfaceThread(this);
-//        RelativeLayout surface = (RelativeLayout) findViewById(R.id.surfaceView);
-//        surface.addView(newSurface);
 
         selectedDevice = null;
         connectBtn = (Button) findViewById(R.id.btnConnect);
@@ -167,9 +174,14 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
         ispisi = (TextView) findViewById(R.id.text3);
         uneto = unesi.getText().toString();
         unesi.setOnKeyListener(this);
-
         bitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.ball);
         x = y = 0;
+//        Canvas canvas = null;
+//        SurfaceHolder holder = surf2.getHolder();
+//        canvas = holder.lockCanvas();
+//        canvas.drawRGB(255,125,100);
+//        holder.unlockCanvasAndPost(canvas);
+//        surf2.draw(canvas);
     }
 
     private void checkBT() {
@@ -214,11 +226,6 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
             uneto = unesi.getText().toString();
             handler.obtainMessage(TYPED_IN, uneto).sendToTarget();
         }
-        return false;
-    }
-
-    @Override
-    public boolean onTouch(View v, MotionEvent event) {
         return false;
     }
 

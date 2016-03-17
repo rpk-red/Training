@@ -48,9 +48,9 @@ public class DeviceList extends AppCompatActivity implements AdapterView.OnItemC
     private void init() {
 
         pairedDevices = new ArrayList<>();
-        devices = new ArrayList<BluetoothDevice>();
+        devices = new ArrayList<>();
         listView = (ListView) findViewById(R.id.listView);
-        listAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
+        listAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1);
         listView.setAdapter(listAdapter);
         listView.setOnItemClickListener(this);
         mFilter = new IntentFilter(BluetoothDevice.ACTION_FOUND);

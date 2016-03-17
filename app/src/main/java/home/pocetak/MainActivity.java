@@ -13,14 +13,13 @@ import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.KeyEvent;
-import android.view.SurfaceView;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.EditText;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -29,7 +28,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.UUID;
 
-public class MainActivity extends AppCompatActivity implements View.OnKeyListener {
+public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_ENABLE_BT = 2;
     private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     private static final int MESSAGE_READ = 1;
@@ -38,29 +37,26 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
     protected static final int TOUCHED = 5;
     public static Handler handler;
     static Intent btIntent;
-    static EditText unesi;
-    static TextView ispisi;
     Button connectBtn;
     protected static final String LOG_TAG = "MainActivity";
     static BluetoothAdapter adapterBT;
     static BluetoothDevice selectedDevice;
     private ConnectThread connect;
     private ConnectedThread connected;
-    String uneto;
     String vraceno;
-    protected static int flag = 0;
+    private boolean connectionFlag = false;
     public Bitmap bitmap;
-    public float x, y;
-    MySurfaceView surf;
-    SurfaceView surf2;
+    TextView textView1, textView2, textView3, textView4, textView5;
+    RelativeLayout layout_joystick;
+    JoyStick js;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
-        surf = (MySurfaceView) findViewById(R.id.surfaceView);
-        surf2  = (SurfaceView) findViewById(R.id.surfaceView2);
+
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
         Log.d(LOG_TAG, "OnCreate");
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -82,26 +78,74 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
 
                     case MESSAGE_READ:
                         vraceno = new String((byte[]) msg.obj);
-                        Toast.makeText(getApplicationContext(), "citas: " + vraceno, Toast.LENGTH_LONG).show();
-                        showStream();
                         break;
 
                     case TYPED_IN:
                         String a = (String) msg.obj;
                         String b = a.concat("\r\n");
                         connected.write(b.getBytes());
-                        showStream();
-                        Toast.makeText(MainActivity.this, "UPISAO JE: " + b, Toast.LENGTH_LONG).show();
                         break;
 
                     case TOUCHED:
-                        Long fi = (Long) msg.obj;
-                        a = fi.toString();
+                        float fi = (float) msg.obj;
+                        a = String.valueOf(fi);
                         b = a.concat("\r\n");
                         connected.write(b.getBytes());
                         break;
                 }
-                return false;
+                return true;
+            }
+        });
+        layout_joystick = (RelativeLayout)findViewById(R.id.layout_joystick);
+
+        js = new JoyStick(getApplicationContext(), layout_joystick, R.mipmap.ball);
+        js.setStickSize(200, 200);
+        js.setLayoutSize(1000, 1000);
+        js.setLayoutAlpha(150);
+        js.setStickAlpha(100);
+        js.setOffset(js.getStickHeight()/2);
+        js.setMinimumDistance(50);
+
+        layout_joystick.setOnTouchListener(new View.OnTouchListener() {
+            public boolean onTouch(View arg0, MotionEvent arg1) {
+                js.drawStick(arg1);
+                if(arg1.getAction() == MotionEvent.ACTION_DOWN
+                        || arg1.getAction() == MotionEvent.ACTION_MOVE) {
+                    textView1.setText("X : " + String.valueOf(js.getX()));
+                    textView2.setText("Y : " + String.valueOf(js.getY()));
+                    textView3.setText("Angle : " + String.valueOf(js.getAngle()));
+                    textView4.setText("Distance : " + String.valueOf(js.getDistance()));
+                    if(connectionFlag == true) {
+                        handler.obtainMessage(TOUCHED, js.getAngle()).sendToTarget();
+                    }
+                    int direction = js.get8Direction();
+                    if(direction == JoyStick.STICK_UP) {
+                        textView5.setText("Direction : Up");
+                    } else if(direction == JoyStick.STICK_UPRIGHT) {
+                        textView5.setText("Direction : Up Right");
+                    } else if(direction == JoyStick.STICK_RIGHT) {
+                        textView5.setText("Direction : Right");
+                    } else if(direction == JoyStick.STICK_DOWNRIGHT) {
+                        textView5.setText("Direction : Down Right");
+                    } else if(direction == JoyStick.STICK_DOWN) {
+                        textView5.setText("Direction : Down");
+                    } else if(direction == JoyStick.STICK_DOWNLEFT) {
+                        textView5.setText("Direction : Down Left");
+                    } else if(direction == JoyStick.STICK_LEFT) {
+                        textView5.setText("Direction : Left");
+                    } else if(direction == JoyStick.STICK_UPLEFT) {
+                        textView5.setText("Direction : Up Left");
+                    } else if(direction == JoyStick.STICK_NONE) {
+                        textView5.setText("Direction : Center");
+                    }
+                } else if(arg1.getAction() == MotionEvent.ACTION_UP) {
+                    textView1.setText("X :");
+                    textView2.setText("Y :");
+                    textView3.setText("Angle :");
+                    textView4.setText("Distance :");
+                    textView5.setText("Direction :");
+                }
+                return true;
             }
         });
 
@@ -120,12 +164,9 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
     public boolean onOptionsItemSelected(MenuItem item) {
 
         Log.d(LOG_TAG, "onOptionsItemSelected");
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
+
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
         }
@@ -136,17 +177,12 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
 
     private void startConnect() {
         if (selectedDevice != null) {
-            flag = 1;
+            connectionFlag = true;
             connect = new ConnectThread(selectedDevice);
             connect.start();
         }
 
     }
-
-    public void showStream() {
-        ispisi.setText("vraceno je: " + vraceno + " uneto je: " + uneto);
-    }
-
 
     public void btnClickHandler(View view) {
 
@@ -158,7 +194,7 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
             } else if (connectBtn.getText().toString().equalsIgnoreCase("disconnect")) {
                 connected.cancel();
                 connect.cancel();
-                flag = 0;
+                connectionFlag = false;
                 connectBtn.setText(R.string.connect_btn);
                 selectedDevice = null;
                 Toast.makeText(MainActivity.this, "You are now disconnected!", Toast.LENGTH_SHORT).show();
@@ -169,19 +205,14 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
     public void Init() {
 
         selectedDevice = null;
+        textView1 = (TextView)findViewById(R.id.textView1);
+        textView2 = (TextView)findViewById(R.id.textView2);
+        textView3 = (TextView)findViewById(R.id.textView3);
+        textView4 = (TextView)findViewById(R.id.textView4);
+        textView5 = (TextView)findViewById(R.id.textView5);
         connectBtn = (Button) findViewById(R.id.btnConnect);
-        unesi = (EditText) findViewById(R.id.text2unesi);
-        ispisi = (TextView) findViewById(R.id.text3);
-        uneto = unesi.getText().toString();
-        unesi.setOnKeyListener(this);
         bitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.ball);
-        x = y = 0;
-//        Canvas canvas = null;
-//        SurfaceHolder holder = surf2.getHolder();
-//        canvas = holder.lockCanvas();
-//        canvas.drawRGB(255,125,100);
-//        holder.unlockCanvasAndPost(canvas);
-//        surf2.draw(canvas);
+
     }
 
     private void checkBT() {
@@ -218,16 +249,7 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
         }
     }
 
-    @Override
-    public boolean onKey(View v, int keyCode, KeyEvent event) {
 
-        if (event.getKeyCode() == KeyEvent.KEYCODE_ENTER && flag == 1 && event.getAction() != KeyEvent.ACTION_DOWN) {
-            Log.d(LOG_TAG, keyCode + " " + event.getKeyCode());
-            uneto = unesi.getText().toString();
-            handler.obtainMessage(TYPED_IN, uneto).sendToTarget();
-        }
-        return false;
-    }
 
     private class ConnectThread extends Thread {
 
@@ -355,16 +377,13 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
     protected void onStop() {
         super.onStop();
         Log.d(LOG_TAG, "onStop");
-        surf.thread.cancel();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         startConnect();
-       if(surf.running == false){
-           surf.thread.onResume();
-       }
+
         Log.d(LOG_TAG, "onResume");
 
     }
@@ -390,21 +409,7 @@ public class MainActivity extends AppCompatActivity implements View.OnKeyListene
     @Override
     protected void onPause() {
         super.onPause();
-        surf.thread.cancel();
-
     }
-
-    //    @Override
-//    protected void onSaveInstanceState(Bundle outState) {
-//        super.onSaveInstanceState(outState);
-//        outState.putString("str", connectBtn.getText().toString());
-//    }
-
-//    @Override
-//    protected void onRestoreInstanceState(Bundle savedInstanceState) {
-//        super.onRestoreInstanceState(savedInstanceState);
-//        connectBtn.setText(savedInstanceState.getString("str"));
-//   }
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {

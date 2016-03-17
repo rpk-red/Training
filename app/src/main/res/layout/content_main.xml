@@ -13,71 +13,71 @@
     tools:context=".MainActivity"
     tools:showIn="@layout/activity_main">
 
-    <TextView
-        android:id="@+id/text1"
-        android:layout_width="match_parent"
+    <LinearLayout
+        android:id="@+id/linearLayout1"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        android:gravity="center_horizontal"
-        android:text="@string/textUput"
-        android:textAppearance="?android:attr/textAppearanceMedium" />
+        android:layout_margin="10dp"
+        android:orientation="vertical" >
+        <TextView
+            android:id="@+id/textView1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="X"
+            android:textColor="#444444"
+            android:textSize="20dp" />
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Y"
+            android:textColor="#444444"
+            android:textSize="20dp" />
+        <TextView
+            android:id="@+id/textView3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Angle"
+            android:textColor="#444444"
+            android:textSize="20dp" />
+        <TextView
+            android:id="@+id/textView4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Distance"
+            android:textColor="#444444"
+            android:textSize="20dp" />
+        <TextView
+            android:id="@+id/textView5"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Direction"
+            android:textColor="#444444"
+            android:textSize="20dp" />
 
-    <EditText
-        android:id="@+id/text2unesi"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/text1"
-        android:layout_marginTop="20dp"
-        android:gravity="center_horizontal"
-        android:inputType="text" />
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/connect_btn"
+            android:id="@+id/btnConnect"
+            android:onClick="btnClickHandler"
+            android:layout_below="@+id/text3"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="30dp"
+            android:layout_marginBottom="10dp"/>
+    </LinearLayout>
 
-    <!--android:onClick="startClickHandler"-->
-
-
-    <TextView
-        android:id="@+id/text3"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/text1"
+    <RelativeLayout
+        android:id="@+id/layout_joystick"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:layout_below="@+id/linearLayout1"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="80dp"
-        android:text="@string/textIspis"
-        android:textAppearance="?android:attr/textAppearanceLarge" />
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/connect_btn"
-        android:id="@+id/btnConnect"
-        android:onClick="btnClickHandler"
-        android:layout_below="@+id/text3"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="30dp"
-        android:layout_marginBottom="10dp"/>
-
-
-
-    <home.pocetak.MySurfaceView
-        android:layout_width="500dp"
-        android:layout_height="500dp"
-        android:id="@+id/surfaceView"
-        android:layout_below="@+id/btnConnect"
-        android:layout_centerHorizontal="true"
-        />
-
-    <SurfaceView
-        android:layout_width="75dp"
-        android:layout_height="75dp"
-        android:id="@+id/surfaceView2"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_below="@+id/text2unesi"
-        android:layout_marginLeft="25dp"
-        android:layout_marginStart="25dp"
-        android:layout_marginTop="5dp"/>
-
+        android:layout_marginTop="29dp"
+        android:background="@mipmap/pozadina" >
+    </RelativeLayout>
 
 
 </RelativeLayout>

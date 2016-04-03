@@ -31,14 +31,16 @@ public class JoyStick {
     private LayoutParams params;
     private int stick_width, stick_height;
 
-    private int position_x = 0, position_y = 0, min_distance = 0, zeroX = 0, zeroY = 0;
-    private float distance = 0, angle = 0;
+    private int position_x = 0, position_y = 0, min_distance = 0;
+    private float distance = 0, angle = 0, zeroX = 0, zeroY = 0, dx=0, dy=0;
 
     private DrawCanvas draw;
     private Paint paint;
     private Bitmap stick;
 
     private boolean touch_state = false;
+    private double motorL;
+    private double motorD;
 
     public JoyStick (Context context, ViewGroup layout, int stick_res_id) {
         mContext = context;
@@ -78,8 +80,8 @@ public class JoyStick {
                 float x = (float) (Math.cos(Math.toRadians(cal_angle(position_x, position_y))) * ((params.width / 2) - OFFSET));
                 float y = (float) (Math.sin(Math.toRadians(cal_angle(position_x, position_y))) * ((params.height / 2) - OFFSET));
                 x += (params.width / 2);
-                y += (params.height / 2);
-                draw.position(x, y);
+                y = y * (-1) + (params.height / 2);
+                draw.position(x,y);
                 draw();
             } else {
                 mLayout.removeView(draw);
@@ -136,21 +138,21 @@ public class JoyStick {
     public int get8Direction() {
         if(distance > min_distance && touch_state) {
             if(angle >= 247.5 && angle < 292.5 ) {
-                return STICK_UP;
+                return STICK_DOWN;
             } else if(angle >= 292.5 && angle < 337.5 ) {
-                return STICK_UPRIGHT;
+                return STICK_DOWNRIGHT;
             } else if(angle >= 337.5 || angle < 22.5 ) {
                 return STICK_RIGHT;
             } else if(angle >= 22.5 && angle < 67.5 ) {
-                return STICK_DOWNRIGHT;
+                return STICK_UPRIGHT;
             } else if(angle >= 67.5 && angle < 112.5 ) {
-                return STICK_DOWN;
+                return STICK_UP;
             } else if(angle >= 112.5 && angle < 157.5 ) {
-                return STICK_DOWNLEFT;
+                return STICK_UPLEFT;
             } else if(angle >= 157.5 && angle < 202.5 ) {
                 return STICK_LEFT;
             } else if(angle >= 202.5 && angle < 247.5 ) {
-                return STICK_UPLEFT;
+                return STICK_DOWNLEFT;
             }
         } else if(distance <= min_distance && touch_state) {
             return STICK_NONE;
@@ -173,6 +175,52 @@ public class JoyStick {
             return STICK_NONE;
         }
         return 0;
+    }
+    public void calculateMotors(){
+
+        if(distance > min_distance && touch_state) {
+            if(angle > 0 && angle < 45 ) {
+                motorD = (angle-45)/45;
+                motorL = (angle-0)/45;
+            } else if(angle >= 45 && angle < 90 ) {
+                motorD = (90-angle)/45;
+                motorL = (angle-45)/45;
+            } else if(angle > 90 || angle < 135 ) {
+                motorD = (135-angle)/45;
+                motorL = (angle-90)/45;
+            } else if(angle >= 135 && angle < 180 ) {
+                motorD = (180-angle)/45;
+                motorL = (135-angle)/45;
+            } else if(angle >= 180 && angle < 225 ) {
+                motorD = (225-angle)/45;
+                motorL = (180-225)/45;
+            } else if(angle >= 225 && angle < 270 ) {
+                motorD = (angle-270)/45;
+                motorL = (225-270)/45;
+            } else if(angle >= 270 && angle < 315 ) {
+                motorL = (angle-315)/45;
+                motorD = (angle-270)/45;
+            } else if(angle >= 315 && angle < 360 ) {
+                motorD = (angle-360)/45;
+                motorL = (angle-315)/45;
+            }
+            else if(angle == 90){
+                motorD = motorL = 1;
+            }
+            else if (angle == 270){
+                motorD = motorL = -1;
+            }
+            else if (angle == 180){
+                motorD = 1;
+                motorL = 1;
+            }
+            else if (angle == 0 || angle == 360){
+                motorD = -1;
+                motorL = 1;
+            }
+        }
+                 motorD *= getDistance();
+                 motorL = motorL * getDistance();
     }
 
     public void setOffset(int offset) {
@@ -240,13 +288,13 @@ public class JoyStick {
 
     private double cal_angle(float x, float y) {
         if(x >= 0 && y >= 0)
-            return Math.round(Math.toDegrees(Math.atan(y/x)));
+            return Math.round(Math.toDegrees(Math.atan(y/x))) *(-1) + 360;
         else if(x < 0 && y >= 0)
-            return Math.round(Math.toDegrees(Math.atan(y / x))) + 180;
+            return Math.round(Math.toDegrees(Math.atan(y / x))) *(-1) + 180;
         else if(x < 0 && y < 0)
-            return Math.round(Math.toDegrees(Math.atan(y / x))) + 180;
+            return Math.round(Math.toDegrees(Math.atan(y / x))) *(-1) + 180;
         else if(x >= 0 && y < 0)
-            return Math.round(Math.toDegrees(Math.atan(y / x))) + 360;
+            return Math.round(Math.toDegrees(Math.atan(y / x))) *(-1);
         return 0;
     }
 

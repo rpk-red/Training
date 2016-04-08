@@ -77,7 +77,8 @@ public class DeviceList extends AppCompatActivity implements AdapterView.OnItemC
 
                 } else if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(action)) {
                     if (MainActivity.adapterBT.getState() == MainActivity.adapterBT.STATE_OFF) {
-                        Toast.makeText(DeviceList.this, "Your bluetooth is disabled, you have to enable it!", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(DeviceList.this, "Your bluetooth is disabled, you have to enable it!",
+                                                        Toast.LENGTH_SHORT).show();
                         finish();
                     }
                 }

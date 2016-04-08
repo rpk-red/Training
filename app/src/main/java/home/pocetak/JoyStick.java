@@ -41,6 +41,7 @@ public class JoyStick {
     private boolean touch_state = false;
     private double motorL;
     private double motorD;
+    static double[] porukaMotori;
 
     public JoyStick (Context context, ViewGroup layout, int stick_res_id) {
         mContext = context;
@@ -63,6 +64,9 @@ public class JoyStick {
         position_x = (int) (arg1.getX() - (params.width / 2));
         position_y = (int) (arg1.getY() - (params.height / 2));
         distance = (float) Math.sqrt(Math.pow(position_x, 2) + Math.pow(position_y, 2));
+        if(distance > params.height/2){
+            distance = params.height/2;
+        }
         angle = (float) cal_angle(position_x, position_y);
 
 
@@ -76,7 +80,7 @@ public class JoyStick {
             if(distance <= (params.width / 2) - OFFSET) {
                 draw.position(arg1.getX(), arg1.getY());
                 draw();
-            } else if(distance > (params.width / 2) - OFFSET){
+            } else if(distance >(params.width / 2) - OFFSET){
                 float x = (float) (Math.cos(Math.toRadians(cal_angle(position_x, position_y))) * ((params.width / 2) - OFFSET));
                 float y = (float) (Math.sin(Math.toRadians(cal_angle(position_x, position_y))) * ((params.height / 2) - OFFSET));
                 x += (params.width / 2);
@@ -176,51 +180,59 @@ public class JoyStick {
         }
         return 0;
     }
-    public void calculateMotors(){
+    public void calculate8(){
 
         if(distance > min_distance && touch_state) {
             if(angle > 0 && angle < 45 ) {
                 motorD = (angle-45)/45;
-                motorL = (angle-0)/45;
+                motorL = 1;
             } else if(angle >= 45 && angle < 90 ) {
-                motorD = (90-angle)/45;
-                motorL = (angle-45)/45;
+                motorD = (angle-45)/45;
+                motorL = 1;
             } else if(angle > 90 || angle < 135 ) {
-                motorD = (135-angle)/45;
-                motorL = (angle-90)/45;
+                motorD = 1;
+                motorL = (135-angle)/45;
             } else if(angle >= 135 && angle < 180 ) {
-                motorD = (180-angle)/45;
+                motorD = 1;
                 motorL = (135-angle)/45;
             } else if(angle >= 180 && angle < 225 ) {
-                motorD = (225-angle)/45;
-                motorL = (180-225)/45;
-            } else if(angle >= 225 && angle < 270 ) {
-                motorD = (angle-270)/45;
-                motorL = (225-270)/45;
-            } else if(angle >= 270 && angle < 315 ) {
-                motorL = (angle-315)/45;
-                motorD = (angle-270)/45;
-            } else if(angle >= 315 && angle < 360 ) {
-                motorD = (angle-360)/45;
-                motorL = (angle-315)/45;
-            }
-            else if(angle == 90){
-                motorD = motorL = 1;
-            }
-            else if (angle == 270){
-                motorD = motorL = -1;
-            }
-            else if (angle == 180){
-                motorD = 1;
-                motorL = 1;
-            }
-            else if (angle == 0 || angle == 360){
                 motorD = -1;
-                motorL = 1;
+                motorL = (225-angle)/45;
+            } else if(angle >= 225 && angle < 270 ) {
+                motorD = -1;
+                motorL = (225-angle)/45;
+            } else if(angle >= 270 && angle < 315 ) {
+                motorD = (angle-315)/45;
+                motorL = -1;
+            } else if(angle >= 315 && angle < 360 ) {
+                motorD = (angle-315)/45;
+                motorL = -1;
             }
+                motorD *= getDistance();
+                motorD /= params.height/2;
+                motorL *= getDistance();
+                motorL /= params.height/2;
+                porukaMotori[0] = motorD;
+                porukaMotori[1] = motorL;
+
+
         }
-                 motorD *= getDistance();
-                 motorL = motorL * getDistance();
+    }
+    public void calculate4(){
+        if(angle <= 180){
+
+            motorD = angle /180;
+            motorL = (180-angle)/180;
+        }
+        else{
+            angle -=180;
+            motorD = -(180-angle)/180;
+            motorL = -(angle)/180;
+        }
+
+        motorD *= getDistance();
+        motorL *= getDistance();
+
     }
 
     public void setOffset(int offset) {

@@ -6,6 +6,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,6 +22,7 @@ public class JoyStick {
     public static final int STICK_DOWNLEFT = 6;
     public static final int STICK_LEFT = 7;
     public static final int STICK_UPLEFT = 8;
+    protected static final String LOG_TAG = "MainActivity";
 
     private int STICK_ALPHA = 200;
     private int LAYOUT_ALPHA = 200;
@@ -181,7 +183,6 @@ public class JoyStick {
         return 0;
     }
     public void calculate8(){
-
         if(distance > min_distance && touch_state) {
             if(angle > 0 && angle < 45 ) {
                 motorD = (angle-45)/45;
@@ -189,7 +190,7 @@ public class JoyStick {
             } else if(angle >= 45 && angle < 90 ) {
                 motorD = (angle-45)/45;
                 motorL = 1;
-            } else if(angle > 90 || angle < 135 ) {
+            } else if(angle >= 90 || angle < 135 ) {
                 motorD = 1;
                 motorL = (135-angle)/45;
             } else if(angle >= 135 && angle < 180 ) {
@@ -207,18 +208,24 @@ public class JoyStick {
             } else if(angle >= 315 && angle < 360 ) {
                 motorD = (angle-315)/45;
                 motorL = -1;
+            } else{
+                motorL=motorD = 0;
             }
-                motorD *= getDistance();
-                motorD /= params.height/2;
-                motorL *= getDistance();
-                motorL /= params.height/2;
-                porukaMotori[0] = motorD;
-                porukaMotori[1] = motorL;
+
+//                motorD *= (double)getDistance();
+//                motorD /= params.height/2;
+//                motorL *= (double)getDistance();
+//                motorL /= params.height/2;
+                Log.d(LOG_TAG, String.valueOf(motorD));
+                Log.d(LOG_TAG, String.valueOf(motorL));
+                porukaMotori = new double[]{motorD, motorL};
+
 
 
         }
     }
     public void calculate4(){
+        motorD = motorL = 0;
         if(angle <= 180){
 
             motorD = angle /180;

@@ -83,14 +83,16 @@ public class MainActivity extends AppCompatActivity {
                     case TYPED_IN:
                         String a = (String) msg.obj;
                         String b = a.concat("\r\n");
+                        Log.d(LOG_TAG,b);
                         connected.write(b.getBytes());
                         break;
 
                     case TOUCHED:
-                        float fi = (float) msg.obj;
-                        a = "H" + String.valueOf(fi) + "E";
+                        double[] fi =(double[]) msg.obj;
+                        a = "H" + String.valueOf(fi[0]) + String.valueOf(fi[1]) + "E";
                         b = a.concat("\r\n");
                         connected.write(b.getBytes());
+
                         break;
                 }
                 return true;
@@ -98,14 +100,6 @@ public class MainActivity extends AppCompatActivity {
         });
         layout_joystick = (RelativeLayout)findViewById(R.id.layout_joystick);
 //      Joystick za mobilni
-//        js = new JoyStick(getApplicationContext(), layout_joystick, R.mipmap.ball);
-//        js.setStickSize(50, 50);
-//        js.setLayoutSize(250, 250);
-//        js.setLayoutAlpha(150);
-//        js.setStickAlpha(100);
-//        js.setOffset(js.getStickHeight()/2);
-//        js.setMinimumDistance(10);
-//      Joystick za tablet
         js = new JoyStick(getApplicationContext(), layout_joystick, R.mipmap.ball);
         js.setStickSize(50, 50);
         js.setLayoutSize(250, 250);
@@ -113,41 +107,51 @@ public class MainActivity extends AppCompatActivity {
         js.setStickAlpha(100);
         js.setOffset(js.getStickHeight()/2);
         js.setMinimumDistance(10);
+//      Joystick za tablet
+//        js = new JoyStick(getApplicationContext(), layout_joystick, R.mipmap.ball);
+//        js.setStickSize(200, 200);
+//        js.setLayoutSize(1000, 1000);
+//        js.setLayoutAlpha(150);
+//        js.setStickAlpha(100);
+//        js.setOffset(js.getStickHeight()/2);
+//        js.setMinimumDistance(50);
 
 
         layout_joystick.setOnTouchListener(new View.OnTouchListener() {
             public boolean onTouch(View arg0, MotionEvent arg1) {
                 js.drawStick(arg1);
-                if(arg1.getAction() == MotionEvent.ACTION_DOWN
+                js.calculate8();
+                if (arg1.getAction() == MotionEvent.ACTION_DOWN
                         || arg1.getAction() == MotionEvent.ACTION_MOVE) {
                     textView1.setText("X : " + String.valueOf(js.getX()));
                     textView2.setText("Y : " + String.valueOf(js.getY()));
                     textView3.setText("Angle : " + String.valueOf(js.getAngle()));
                     textView4.setText("Distance : " + String.valueOf(js.getDistance()));
-                    if(connectionFlag == true) {
+                    if (connectionFlag == true) {
                         handler.obtainMessage(TOUCHED, js.porukaMotori).sendToTarget();
+//                        handler.obtainMessage(TOUCHED, js.porukaMotori[1]).sendToTarget();
                     }
                     int direction = js.get8Direction();
-                    if(direction == JoyStick.STICK_UP) {
+                    if (direction == JoyStick.STICK_UP) {
                         textView5.setText("Direction : Up");
-                    } else if(direction == JoyStick.STICK_UPRIGHT) {
+                    } else if (direction == JoyStick.STICK_UPRIGHT) {
                         textView5.setText("Direction : Up Right");
-                    } else if(direction == JoyStick.STICK_RIGHT) {
+                    } else if (direction == JoyStick.STICK_RIGHT) {
                         textView5.setText("Direction : Right");
-                    } else if(direction == JoyStick.STICK_DOWNRIGHT) {
+                    } else if (direction == JoyStick.STICK_DOWNRIGHT) {
                         textView5.setText("Direction : Down Right");
-                    } else if(direction == JoyStick.STICK_DOWN) {
+                    } else if (direction == JoyStick.STICK_DOWN) {
                         textView5.setText("Direction : Down");
-                    } else if(direction == JoyStick.STICK_DOWNLEFT) {
+                    } else if (direction == JoyStick.STICK_DOWNLEFT) {
                         textView5.setText("Direction : Down Left");
-                    } else if(direction == JoyStick.STICK_LEFT) {
+                    } else if (direction == JoyStick.STICK_LEFT) {
                         textView5.setText("Direction : Left");
-                    } else if(direction == JoyStick.STICK_UPLEFT) {
+                    } else if (direction == JoyStick.STICK_UPLEFT) {
                         textView5.setText("Direction : Up Left");
-                    } else if(direction == JoyStick.STICK_NONE) {
+                    } else if (direction == JoyStick.STICK_NONE) {
                         textView5.setText("Direction : Center");
                     }
-                } else if(arg1.getAction() == MotionEvent.ACTION_UP) {
+                } else if (arg1.getAction() == MotionEvent.ACTION_UP) {
                     textView1.setText("X :");
                     textView2.setText("Y :");
                     textView3.setText("Angle :");
@@ -157,7 +161,6 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
-        js.calculate8();
     }
 
     @Override
@@ -358,6 +361,11 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 }
 
+//                try {
+//                    connected.sleep(50);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
             }
 
         }

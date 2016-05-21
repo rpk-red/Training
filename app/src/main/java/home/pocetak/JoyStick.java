@@ -12,6 +12,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 
+import java.text.DecimalFormat;
+
 public class JoyStick {
     public static final int STICK_NONE = 0;
     public static final int STICK_UP = 1;
@@ -190,7 +192,7 @@ public class JoyStick {
             } else if(angle >= 45 && angle < 90 ) {
                 motorD = (angle-45)/45;
                 motorL = 1;
-            } else if(angle >= 90 || angle < 135 ) {
+            } else if(angle >= 90 && angle < 135 ) {
                 motorD = 1;
                 motorL = (135-angle)/45;
             } else if(angle >= 135 && angle < 180 ) {
@@ -212,13 +214,13 @@ public class JoyStick {
                 motorL=motorD = 0;
             }
 
-//                motorD *= (double)getDistance();
-//                motorD /= params.height/2;
-//                motorL *= (double)getDistance();
-//                motorL /= params.height/2;
-                Log.d(LOG_TAG, String.valueOf(motorD));
-                Log.d(LOG_TAG, String.valueOf(motorL));
-                porukaMotori = new double[]{motorD, motorL};
+
+            DecimalFormat decimalFormat = new DecimalFormat();
+            decimalFormat.setMaximumFractionDigits(2);
+            motorL = Double.parseDouble(decimalFormat.format(motorL));
+            motorD = Double.parseDouble(decimalFormat.format(motorD));
+            porukaMotori = new double[]{motorL, motorD};
+
 
 
 

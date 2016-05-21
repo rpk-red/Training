@@ -88,8 +88,8 @@ public class MainActivity extends AppCompatActivity {
                         break;
 
                     case TOUCHED:
-                        double[] fi =(double[]) msg.obj;
-                        a = "H" + String.valueOf(fi[0]) + String.valueOf(fi[1]) + "E";
+                        double[] db =(double[]) msg.obj;
+                        a = "H" + String.valueOf(db[0]) + "M" + String.valueOf(db[1]) + "E";
                         b = a.concat("\r\n");
                         connected.write(b.getBytes());
 
@@ -100,21 +100,21 @@ public class MainActivity extends AppCompatActivity {
         });
         layout_joystick = (RelativeLayout)findViewById(R.id.layout_joystick);
 //      Joystick za mobilni
-        js = new JoyStick(getApplicationContext(), layout_joystick, R.mipmap.ball);
-        js.setStickSize(50, 50);
-        js.setLayoutSize(250, 250);
-        js.setLayoutAlpha(150);
-        js.setStickAlpha(100);
-        js.setOffset(js.getStickHeight()/2);
-        js.setMinimumDistance(10);
-//      Joystick za tablet
 //        js = new JoyStick(getApplicationContext(), layout_joystick, R.mipmap.ball);
-//        js.setStickSize(200, 200);
-//        js.setLayoutSize(1000, 1000);
+//        js.setStickSize(50, 50);
+//        js.setLayoutSize(250, 250);
 //        js.setLayoutAlpha(150);
 //        js.setStickAlpha(100);
 //        js.setOffset(js.getStickHeight()/2);
-//        js.setMinimumDistance(50);
+//        js.setMinimumDistance(10);
+//      Joystick za tablet
+        js = new JoyStick(getApplicationContext(), layout_joystick, R.mipmap.ball);
+        js.setStickSize(200, 200);
+        js.setLayoutSize(1000, 1000);
+        js.setLayoutAlpha(150);
+        js.setStickAlpha(100);
+        js.setOffset(js.getStickHeight()/2);
+        js.setMinimumDistance(50);
 
 
         layout_joystick.setOnTouchListener(new View.OnTouchListener() {
@@ -129,7 +129,6 @@ public class MainActivity extends AppCompatActivity {
                     textView4.setText("Distance : " + String.valueOf(js.getDistance()));
                     if (connectionFlag == true) {
                         handler.obtainMessage(TOUCHED, js.porukaMotori).sendToTarget();
-//                        handler.obtainMessage(TOUCHED, js.porukaMotori[1]).sendToTarget();
                     }
                     int direction = js.get8Direction();
                     if (direction == JoyStick.STICK_UP) {
@@ -361,11 +360,11 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 }
 
-//                try {
-//                    connected.sleep(50);
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                }
+                try {
+                    connected.sleep(50);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
 
         }
@@ -373,7 +372,6 @@ public class MainActivity extends AppCompatActivity {
         public void write(byte[] bytes) {
             try {
                 mmOutStream.write(bytes);
-                // mmOutStream.flush();
             } catch (IOException e) {
                 e.printStackTrace();
             }

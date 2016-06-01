@@ -146,6 +146,7 @@ public class DeviceList extends AppCompatActivity implements AdapterView.OnItemC
         if (listAdapter.getItem(position).contains("Paired")) {
 
             MainActivity.selectedDevice = devices.get(position);
+            MainActivity.selektovanBT = true;
             finish();
 
         } else {

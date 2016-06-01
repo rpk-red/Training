@@ -6,7 +6,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -186,7 +185,7 @@ public class JoyStick {
     }
     public void calculate8(){
         if(distance > min_distance && touch_state) {
-            if(angle > 0 && angle < 45 ) {
+            if(angle >= 0 && angle < 45 ) {
                 motorD = (angle-45)/45;
                 motorL = 1;
             } else if(angle >= 45 && angle < 90 ) {
@@ -200,7 +199,7 @@ public class JoyStick {
                 motorL = (135-angle)/45;
             } else if(angle >= 180 && angle < 225 ) {
                 motorD = -1;
-                motorL = (225-angle)/45;
+                motorL = (angle-225)/45;
             } else if(angle >= 225 && angle < 270 ) {
                 motorD = -1;
                 motorL = (225-angle)/45;
@@ -208,12 +207,13 @@ public class JoyStick {
                 motorD = (angle-315)/45;
                 motorL = -1;
             } else if(angle >= 315 && angle < 360 ) {
-                motorD = (angle-315)/45;
+                motorD = (315-angle)/45;
                 motorL = -1;
             } else{
                 motorL=motorD = 0;
             }
-
+            motorL *= (getDistance()/500);
+            motorD *= (getDistance()/500);
 
             DecimalFormat decimalFormat = new DecimalFormat();
             decimalFormat.setMaximumFractionDigits(2);
@@ -238,9 +238,36 @@ public class JoyStick {
             motorD = -(180-angle)/180;
             motorL = -(angle)/180;
         }
+//        if(angle >=0 && angle <90){
+//
+//            motorL = 1;
+//            motorD = angle/90;
+//        }
+//        if(angle >=90 && angle <180){
+//
+//            motorL = (180-angle)/90;
+//            motorD = 1;
+//        }
+//        if(angle >=180 && angle <270){
+//
+//            motorL = (180-angle)/90;
+//            motorD = -1;
+//        }
+//        if(angle >=270 && angle <=360){
+//
+//            motorL = -1;
+//            motorD = (angle-360)/90;
+//        }
 
-        motorD *= getDistance();
-        motorL *= getDistance();
+        motorD *= (getDistance()/500);
+        motorL *= (getDistance()/500);
+
+        DecimalFormat decimalFormat = new DecimalFormat();
+        decimalFormat.setMaximumFractionDigits(2);
+        motorL = Double.parseDouble(decimalFormat.format(motorL));
+        motorD = Double.parseDouble(decimalFormat.format(motorD));
+        porukaMotori = new double[]{motorL, motorD};
+
 
     }
 

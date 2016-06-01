@@ -41,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
     protected static final String LOG_TAG = "MainActivity";
     static BluetoothAdapter adapterBT;
     static BluetoothDevice selectedDevice;
+    static boolean selektovanBT;
     private ConnectThread connect;
     private ConnectedThread connected;
     String vraceno;
@@ -69,6 +70,7 @@ public class MainActivity extends AppCompatActivity {
             public boolean handleMessage(Message msg) {
 
                 connectBtn.setText(R.string.disconnect_btn);
+                connectBtn.setVisibility(View.VISIBLE);
                 switch (msg.what) {
 
                     case SUCCESS_CONNECTED:
@@ -120,7 +122,7 @@ public class MainActivity extends AppCompatActivity {
         layout_joystick.setOnTouchListener(new View.OnTouchListener() {
             public boolean onTouch(View arg0, MotionEvent arg1) {
                 js.drawStick(arg1);
-                js.calculate8();
+                js.calculate4();
                 if (arg1.getAction() == MotionEvent.ACTION_DOWN
                         || arg1.getAction() == MotionEvent.ACTION_MOVE) {
                     textView1.setText("X : " + String.valueOf(js.getX()));
@@ -156,6 +158,14 @@ public class MainActivity extends AppCompatActivity {
                     textView3.setText("Angle :");
                     textView4.setText("Distance :");
                     textView5.setText("Direction :");
+                    js.porukaMotori = new double[]{0, 0};
+                    if (connectionFlag == true) {
+
+                        handler.obtainMessage(TOUCHED, js.porukaMotori).sendToTarget();
+                    }
+
+
+
                 }
                 return true;
             }
@@ -397,7 +407,12 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        startConnect();
+        if(selektovanBT) {
+            connectBtn.setVisibility(View.GONE);
+            Toast.makeText(this,"CONNECTING, PLEASE WAIT", Toast.LENGTH_SHORT).show();
+            startConnect();
+            selektovanBT = false;
+        }
 
         Log.d(LOG_TAG, "onResume");
 

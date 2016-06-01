@@ -5,6 +5,6 @@
     <string name="textUput">Unesite jednu od sledecih komandi:LEVO, DESNO, NAPRED, NAZAD i pritisnite dugme START</string>
     <string name="textIspis"> </string>
     <string name="connect_btn">Connect</string>
-    <string name="txtDevices">Paired Devices</string>
+    <string name="txtDevices">Discovered Devices</string>
     <string name="disconnect_btn">Disconnect</string>
 </resources>

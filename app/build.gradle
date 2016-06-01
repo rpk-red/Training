@@ -6,7 +6,7 @@ android {
     compileSdkVersion 23
     buildToolsVersion "22.0.1"
     defaultConfig {
-        applicationId "home.pocetak"
+        applicationId "ftn.pocetak"
         minSdkVersion 15
         targetSdkVersion 23
         versionCode 1
